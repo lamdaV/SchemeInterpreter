@@ -20,6 +20,7 @@
   ]
   [let-exp ; for let, let*, letrec
     (let-type symbol?) ; lets are handled the same, might as well keep track of the call type.
+    (name (lambda (x) (if (boolean? x) (not x) x)))
     (variables (list-of symbol?))
     (values (list-of expression?))
     (body (list-of expression?))

@@ -75,33 +75,63 @@
           [(or (eqv? (car datum) 'let)
                (eqv? (car datum) 'let*)
                (eqv? (car datum) 'letrec)) ; (let (assignment) body)
-            (if (> 3 (length datum))
-              (eopl:error 'parse-exp "[ ERROR ]: malformed let expression ~% --- let requires an identifier, variable assignment, and body: ~s" datum)
-              (let ([variable-assignment (cadr datum)]
-                    [body (cddr datum)])
-                (letrec (
+            (let ([letLength (length datum)]
                   [parse-let (lambda (assignment-pair) ; let-helper
+                                (cond
+                                  [(null? assignment-pair)
+                                    (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment. ~% --- a variable assignment cannot be empty: ~s" assignment-pair)
+                                  ]
+                                  [(improper? assignment-pair)
+                                    (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment. ~% --- a variable assignment cannot be an improper list: ~s" assignment-pair)
+                                  ]
+                                  [(not (equal? 2 (length assignment-pair)))
+                                    (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment ~% --- all variable assignment must of length 2: ~s" assignment-pair)
+                                  ]
+                                  [else
+                                    (let ([variable (car assignment-pair)]
+                                          [value (cadr assignment-pair)])
+                                      (if (not (symbol? variable))
+                                        (eopl:error 'parse-exp "[ ERROR ]: malformed let variable assignment ~% --- all variables being assigned must be a symbol: ~s from ~s" variable assignment-pair)
+                                        (list variable (parse-exp value))
+                                      )
+                                    )
+                                  ]
+                                )
+                             )
+                  ])
+              (cond
+                [(> 3 letLength)
+                  (eopl:error 'parse-exp "[ ERROR ]: malformed let expression ~% --- let requires an identifier, variable assignment, and body: ~s" datum)
+                ]
+                [(symbol? (cadr datum)) ; named length
+                  (let ([name (cadr datum)]
+                        [variable-assignment (caddr datum)]
+                        [body (cdddr datum)])
                     (cond
-                      [(null? assignment-pair)
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment. ~% --- a variable assignment cannot be empty: ~s" assignment-pair)
+                      [(null? body)
+                        (eopl:error 'parse-exp "[ ERROR ]: malformed NAMED let expression ~% --- body cannot be empty: ~s in ~s" body)
                       ]
-                      [(improper? assignment-pair)
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment. ~% --- a variable assignment cannot be an improper list: ~s" assignment-pair)
+                      [(not (list? variable-assignment))
+                        (eopl:error 'parse-exp "[ ERROR ]: malformed NAMED let variable assignment ~% --- variable assignment must be a list of list: ~s" variable-assignment)
                       ]
-                      [(not (equal? 2 (length assignment-pair)))
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment ~% --- all variable assignment must of length 2: ~s" assignment-pair)
+                      [(improper? variable-assignment)
+                        (eopl:error 'parse-exp "[ ERROR ]: malformed NAMED let variable assignment ~% --- variable assignment cannot be an improper list: ~s" variable-assignment)
                       ]
                       [else
-                        (let ([variable (car assignment-pair)]
-                              [value (cadr assignment-pair)])
-                          (if (not (symbol? variable))
-                            (eopl:error 'parse-exp "[ ERROR ]: malformed let variable assignment ~% --- all variables being assigned must be a symbol: ~s from ~s" variable assignment-pair)
-                            (list variable (parse-exp value))
-                          )
+                        (let* ([variable-value (map parse-let variable-assignment)]
+                               [variable (map car variable-value)]
+                               [value (map cadr variable-value)]
+                               [evaluated-body (map parse-exp body)]
+                               [let-type (car datum)])
+                          (let-exp let-type name variable value evaluated-body)
                         )
                       ]
                     )
-                  )])
+                  )
+                ]
+                [else ; regular lets
+                  (let ([variable-assignment (cadr datum)]
+                        [body (cddr datum)])
                     (cond
                       [(null? body)
                         (eopl:error 'parse-exp "[ ERROR ]: malformed let expression ~% --- body cannot be empty: ~s" body)
@@ -118,13 +148,14 @@
                                [value (map cadr variable-value)]
                                [evaluated-body (map parse-exp body)]
                                [let-type (car datum)])
-                          (let-exp let-type variable value evaluated-body)
+                          (let-exp let-type #f variable value evaluated-body)
                         )
                       ]
                     )
-                )
+                  )
+                ]
               )
-            )
+            ) ; end of let body
           ]
           [(eqv? (car datum) 'if) ; (if (conditional) (true-exp) (false-exp))
             (let ([ifLength (length datum)])
@@ -196,7 +227,7 @@
   )
 )
 
-; Unparser.
+; Unparser
 (define unparse-exp
   (lambda (datum)
     (cases expression datum
@@ -225,10 +256,13 @@
           (cons decode-operator decode-arguments)
         )
       ]
-      [let-exp (let-type variable value body)
+      [let-exp (let-type name variable value body)
         (let ([decode-value (map unparse-exp value)]
               [decode-body (map unparse-exp body)])
-          (cons* let-type (map list variable decode-value) decode-body)
+          (if name
+            (cons* let-type name (map list variable decode-value) decode-body)
+            (cons* let-type (map list variable decode-value) decode-body)
+          )
         )
       ]
       [if-then-exp (conditional true-exp)
