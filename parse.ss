@@ -14,7 +14,7 @@
 (define literal?
   (lambda (x)
     (ormap (lambda (proc) (proc x))
-           (list number? vector? symbol? boolean? string? (lambda (x) (and (list? x) (eqv? 'quote (car x))))))
+           (list null? number? vector? symbol? boolean? string?))
   )
 )
 
@@ -26,6 +26,7 @@
       [(literal? datum) (lit-exp datum)]
       [(pair? datum)
         (cond
+          [(eqv? (car datum) 'quote) (parse-exp (cadr datum))]
           [(eqv? (car datum) 'lambda) ; (lambda (variables) body)
             (if (> 3 (length datum))
               (eopl:error 'parse-exp "[ ERROR ]: malformed lambda expression ~% --- lambda requires an identifier, variable (x, (x), or (x . y)), and body ~s" datum)

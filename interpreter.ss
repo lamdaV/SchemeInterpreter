@@ -11,16 +11,16 @@
   (lambda (exp)
     (cases expression exp
       [lit-exp (datum) datum]
-      [var-exp (id)
-				(apply-env init-env id ; look up its value.
-              	   (lambda (x) x) ; procedure to call if id is in the environment
-                   (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+      [var-exp (variable)
+				(apply-env init-env variable ; look up its value.
+              	   (lambda (x) x) ; procedure to call if variable is in the environment
+                   (lambda () (eopl:error 'apply-env ; procedure to call if variable not in env
 		                                      "variable not found in environment: ~s"
-			                                    id)))
+			                                     variable)))
       ]
       [app-exp (operator arguments)
         (let ([proc-value (eval-exp operator)]
-              [args (eval-rands rands)])
+              [args (eval-rands arguments)])
           (apply-proc proc-value args)
         )
       ]
@@ -44,7 +44,7 @@
 (define apply-proc
   (lambda (proc-value args)
     (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op args)]
+      [prim-proc (operator) (apply-prim-proc operator args)]
 			; You will add other cases
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s"
