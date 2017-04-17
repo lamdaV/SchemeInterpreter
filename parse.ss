@@ -14,7 +14,7 @@
 (define literal?
   (lambda (x)
     (ormap (lambda (proc) (proc x))
-           (list number? vector? symbol? boolean? string?))
+           (list number? vector? symbol? boolean? string? (lambda (x) (and (list? x) (eqv? 'quote (car x))))))
   )
 )
 
