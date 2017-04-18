@@ -81,20 +81,277 @@
 
 ; Usually an interpreter must define each
 ; built-in procedure individually.  We are "cheating" a little bit.
+ ;cons, car, cdr, list, null?, assq, eq?, equal?, atom?, length, list-
+;>vector, list?, pair?, procedure?, vector->list, vector, make-vector, vector-ref,
+;vector?, number?, symbol?, set-car! , set-cdr!, vector-set!, display , newline
 (define apply-prim-proc
   (lambda (prim-proc args)
-    (case prim-proc
-      [(+) (apply + args)]
-      [(-) (apply - args)]
-      [(*) (apply * args)]
-      [(add1) (+ (1st args) 1)]
-      [(sub1) (- (1st args) 1)]
-      [(cons) (cons (1st args) (2nd args))]
-      [(=) (apply = args)]
-      [(list) (apply list args)]
-      [else
-        (error 'apply-prim-proc "Bad primitive procedure name: ~s" prim-op)
-      ]
+    (let ([argsLength (length args)])
+        (case prim-proc
+          [(+) 
+            (if ((list-of numbers?) args)
+              (apply + args)
+              (error 'apply-prim-proc "[ ERROR ]: Malformed + argument ~% --- + expects arguments a list of numbers: ~s" args)
+            )
+          ]
+          [(-)
+            (if ((list-of numbers?) args)
+              (apply - args)
+              (error 'apply-prim-proc "[ ERROR ]: Malformed - argument ~% --- - expects arguments a list of numbers: ~s" args)
+            )
+          ]
+          [(*)
+            (if ((list-of numbers?) args)
+              (apply * args)
+              (error 'apply-prim-proc "[ ERROR ]: Malformed * argument ~% --- * expects arguments a list of numbers: ~s" args)
+            )
+          ]
+          [(/)
+            (if ((list-of numbers?) args)
+              (apply / args)
+              (error 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- / expects arguments a list of numbers: ~s" args)
+            )
+          ]
+          [(zero?)
+            (if (equal? 1 argsLength)
+              (zero? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- zero? expects one argument: ~s in ~s" argLength args)
+            )
+          ]
+          [(add1) 
+            (if (equal? 1 argsLength)
+              (add1 (1st args) 1)
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- add1 expects one argument: ~s in ~s" argsLength args)
+            )
+          ]
+          [(sub1) (sub1 (1st args))]
+          [(cons) (cons (1st args) (2nd args))]
+          [(cdr)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdr expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cdr arguments ~% --- cdr expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cdr (1st args))]
+            )
+          ]
+          [(car)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- car expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed car arguments ~% --- car expects a list argument: ~s in ~s" (1st args) args)]
+              [else (car (1st args))]
+            )
+          ]
+          [(cadr)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cadr expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cadr arguments ~% --- cadr expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cadr (1st args))]
+            )
+          ]
+          [(cddr)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cddr expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cddr arguments ~% --- cddr expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cddr (1st args))]
+            )
+          ]
+          [(cdar)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdar expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cdar arguments ~% --- cdar expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cdar (1st args))]
+            )
+          ]
+          [(caar)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- caar expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed caar arguments ~% --- caar expects a list argument: ~s in ~s" (1st args) args)]
+              [else (caar (1st args))]
+            )
+          ]
+          [(cdddr)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdddr expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cdddr arguments ~% --- cdddr expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cdddr (1st args))]
+            )
+          ]
+          [(caddr)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- caddr expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed caddr arguments ~% --- caddr expects a list argument: ~s in ~s" (1st args) args)]
+              [else (caddr (1st args))]
+            )
+          ]
+          [(cdadr)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdadr expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cdadr arguments ~% --- cdadr expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cdadr (1st args))]
+            )
+          ]
+          [(cddar)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cddar expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cddar arguments ~% --- cddar expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cddar (1st args))]
+            )
+          ]
+          [(cdaar)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdaar expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cdaar arguments ~% --- cdaar expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cdaar (1st args))]
+            )
+          ]
+          [(cadar)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cadar expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed cadar arguments ~% --- cadar expects a list argument: ~s in ~s" (1st args) args)]
+              [else (cadar (1st args))]
+            )
+          ]
+          [(caaar)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- caaar expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed caaar arguments ~% --- caaar expects a list argument: ~s in ~s" (1st args) args)]
+              [else (caaar (1st args))]
+            )
+          ]
+          [(null?)
+            (if (equal? 1 argsLength)
+              (null? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- null expects one argument: ~s in ~s" argsLength args)
+            )
+          ]
+          [(assq)
+            (cond
+              [(not (equal? 2 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- assq expects two arguments: ~s in ~s" argsLength args)]
+              [(not ((list-of list?) (2nd args))) (error 'apply-prim-proc "[ ERROR ]: Malformed assq arguments ~% --- assq expects its second argument to be a list of lists: ~s in ~s" (2nd args) args)]
+              [else (assq (1st args) (2nd args))]
+            )
+          ]
+          [(eqv?)
+            (if (equal? 2 argsLength)
+              (eqv? (1st args) (2nd args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- eqv? expects two arguments: ~s in ~s" argsLength args)
+            )
+          ]
+          [(equal?)
+            (if (equal? 2 argsLength)
+              (equal? (1st args) (2nd args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- equal? expects two arguments: ~s in ~s" argsLength args)
+            )
+          ]
+          [(atom?)
+            (if (equal? 1 argsLength)
+              (atom? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- atom? expects one argument: ~s in ~s" argsLength args)
+            )
+          ]
+          [(length)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- length expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed length argument ~% --- length expects a list: ~s in ~s" (1st args) args)]
+              [else (length (1st args))]
+            )
+          ]
+          [(list->vector)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- list->vector expects one argument: ~s in ~s" argsLength args)]
+              [(not (list? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed list-vector argument ~% --- list->vector expects a list arguments: ~s in ~s" (1st args) args)]
+              [else (list->vector (1st args))]
+            )
+          ]
+          [(list?)
+            (if (equal? 1 argsLength)
+              (list? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- list? expects one argument: ~s in ~s" argsLength args)
+            )
+          ]
+          [(pair?)
+            (if (equal? 1 argsLength)
+              (pair? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- pair? expects one arguments: ~s in ~s" argsLength args)
+            )
+          ]
+          [(procedure?)
+            (if (equal? 1 argsLength)
+              (procedure? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- procedure? expects one arguments: ~s in ~s" argsLength args)
+            )
+          ]
+          [(vector->list)
+            (cond
+              [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- vector->list expects one argument: ~s in ~s" argsLength args)]
+              [(not (vector? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed vector->list argument ~% --- vector->list expects a vector argument: ~s in ~s" (1st args) args)]
+              [else (vector->list (1st args))]
+            )
+          ]
+          [(vector)
+            (apply vector args)
+          ]
+          [(make-vector)
+            (cond
+              [(not (equal? 2 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- make-vector expects two arguments (size and initial fill value): ~s in ~s" argsLength args)]
+              [(not (fixnum? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed make-vector argument ~% --- make-vector expects the first argument to be a nonnegative fixnum: ~s in ~s" (1st args) args)]
+              [(not (positive? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed make-vector argument ~% --- make-vector expects the first argument to be a nonnegative fixnum: ~s in ~s" (1st args) args)]
+            )
+          ]
+          [(vector-ref)
+            (cond
+              [(not (equal? 2 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- vector-ref expects two arguments: ~s in ~s" argLength args)]
+              [(not (vector? (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the first argument to be a vector: ~s in ~s" (1st args) args)]
+              [(not (or (fixnum?) (2nd args)) (positive? (2nd args)) (zero? (2nd args))) (error 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the second argument to be a nonnegative fixnum: ~s in ~s" (2nd args) args)]
+              [(>= (2nd args) (vector-length (1st args))) (error 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the second argument to be less than the length of the vector: ~s > ~s" (2nd args) (length (1st args)))]
+              [else (vector-ref (1st args) (2nd args))]
+            )
+          ]
+          [(vector?)
+            (if (equal? 1 argsLength)
+              (vector? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- vector? expects one arguments : ~s in ~s" argLength args)
+            )
+          ]
+          [(number?)
+            (if (equal? 1 argsLength)
+              (number? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- number? expects one arguments : ~s in ~s" argLength args)
+            )
+          ]
+          [(symbol?)
+            (if (equal? 1 argsLength)
+              (symbol? (1st args))
+              (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- symbol? expects one arguments : ~s in ~s" argLength args)
+            )
+          ]
+          [(set-car!)
+          
+          ]
+          [(set-cdr!)
+          
+          ]
+          [(vector-set!)
+          
+          ]
+          [(display)
+            (if (or (equal? 2 argsLength) (equal? 1 argsLength))
+              (apply display args)
+              (error)
+            )
+          ]
+          [(newline)
+            (if (zero? argsLength)
+              (newline)
+              (error)
+            )
+          ]
+          [(=) (apply = args)]
+          [(list) (apply list args)]
+          [else
+            (error 'apply-prim-proc "Bad primitive procedure name: ~s" prim-op)
+          ]
+        )
+      )
     )
   )
 )
