@@ -1,59 +1,26 @@
 ; top-level-eval evaluates a form in the global environment
 
-(define top-level-eval
-  (lambda (form)
-    ; later we may add things that are not expressions.
-    (eval-exp form)
-  )
-)
-
 (define 1st car)
 (define 2nd cadr)
 (define 3rd caddr)
 (define 4th cadddr)
 
-; eval-exp is the main component of the interpreter
-
-(define eval-exp
-  (lambda (exp)
-    (cases expression exp
-      [lit-exp (datum) datum]
-      [var-exp (variable)
-				(apply-env init-env variable ; look up its value.
-              	   (lambda (x) x) ; procedure to call if variable is in the environment
-                   (lambda () (eopl:error 'apply-env ; procedure to call if variable not in env
-		                                      "variable not found in environment: ~s"
-			                                     variable)))
-      ]
-      [if-then-exp (conditional true-exp)
-        (if (eval-exp conditional)
-          (eval-exp true-exp)
-        )
-      ]
-      [if-else-exp (conditional true-exp false-exp)
-        (if (eval-exp conditional)
-          (eval-exp true-exp)
-          (eval-exp false-exp)
-        )
-      ]
-      [app-exp (operator arguments)
-        (let ([proc-value (eval-exp operator)]
-              [args (eval-rands arguments)])
-          (apply-proc proc-value args)
-        )
-      ]
-      [lambda-exact-exp (variables body)
-        (map eval-exp body)
-      ]
-      [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
+(define eval-bodies
+  (lambda (bodies env)
+    (if (null? (cdr bodies))
+      (eval-exp (car bodies) env)
+      (begin
+        (eval-exp (car bodies) env)
+        (eval-bodies (cdr bodies) env)
+      )
     )
   )
 )
 
 ; evaluate the list of operands, putting results into a list
 (define eval-rands
-  (lambda (rands)
-    (map eval-exp rands)
+  (lambda (rands env)
+    (map (lambda (x) (eval-exp x env)) rands)
   )
 )
 
@@ -66,12 +33,17 @@
       [prim-proc (operator)
         (apply-prim-proc operator args)
       ]
+      [closure (ids bodies env)
+        (eval-bodies bodies
+          (extend-env ids args env)
+        )
+      ]
 			; You will add other cases
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s"
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * add1 sub1 = cons car cdr list null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline cadar ))
+(define *prim-proc-names* '(+ - * / add1 sub1 = > < >= <= zero? not cons car cdr cadr caar cdar cddr caaar cdaar cadar caadr cddar cdadr caddr cdddr list null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline cadar ))
 
 (define init-env         ; for now, our initial global environment only contains
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -82,9 +54,75 @@
   )
 )
 
+(define global-env init-env)
+
+(define top-level-eval
+  (lambda (form)
+    (eval-exp form
+      (empty-env)
+    )
+  )
+)
+
+; eval-exp is the main component of the interpreter
+
+(define eval-exp
+  (let ([identity-proc (lambda (x) x)])
+    (lambda (exp env)
+      (cases expression exp
+        [lit-exp (datum) datum]
+        [var-exp (variable)
+          (apply-env env
+            variable
+            identity-proc ; procedure to call if var is in env
+            (lambda () ; procedure to call if var is not in env
+              (apply-env global-env 
+                variable ; look up its value.
+                identity-proc ; procedure to call if variable is in the environment
+                (lambda () (eopl:error 'apply-env ; procedure to call if variable not in env
+                  "variable not found in environment: ~s"
+                   variable)
+                )
+             )
+            )
+          )
+        ]
+        [if-then-exp (conditional true-exp)
+          (if (eval-exp conditional env)
+            (eval-exp true-exp env)
+          )
+        ]
+        [if-else-exp (conditional true-exp false-exp)
+          (if (eval-exp conditional env)
+            (eval-exp true-exp env)
+            (eval-exp false-exp env)
+          )
+        ]
+        [app-exp (operator arguments)
+          (let ([proc-value (eval-exp operator env)]
+                [args (eval-rands arguments env)])
+            (apply-proc proc-value args)
+          )
+        ]
+        [let-exp (let-type name variables values body)
+          (eval-bodies body (extend-env variables (eval-rands values env) env))
+        ]
+        [lambda-exp (required optional body)
+          (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)
+          ; TODO: later
+        ]
+        [lambda-exact-exp (variables body)
+          (closure variables body env)
+        ]
+        [set!-exp (variable value) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
+      )
+    )
+  )
+)
+
+
 ; Usually an interpreter must define each
 ; built-in procedure individually.  We are "cheating" a little bit.
- cons car cdr list null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline
 (define apply-prim-proc
   (lambda (prim-proc args)
     (let ([argsLength (length args)])
@@ -111,6 +149,36 @@
           (if ((list-of number?) args)
             (apply / args)
             (error 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- / expects arguments a list of numbers: ~s" args)
+          )
+        ]
+        [(<)
+          (if (and (not (null? args)) ((list-of number?) args))
+            (apply < args)
+            (error 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- < expects arguments a list of numbers: ~s" args)
+          )
+        ]
+        [(>)
+          (if (and (not (null? args)) ((list-of number?) args))
+            (apply > args)
+            (error 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- > expects arguments a list of numbers: ~s" args)
+          )
+        ]
+        [(>=)
+          (if (and (not (null? args)) ((list-of number?) args))
+            (apply >= args)
+            (error 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- >= expects arguments a list of numbers: ~s" args)
+          )
+        ]
+        [(<=)
+          (if (and (not (null? args)) ((list-of number?) args))
+            (apply <= args)
+            (error 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- <= expects arguments a list of numbers: ~s" args)
+          )
+        ]
+        [(not)
+          (if (equal? 1 argsLength)
+            (not (1st args))
+            (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- not expects one argument: ~s in ~s" argLength args)
           )
         ]
         [(zero?)
@@ -236,9 +304,9 @@
             [else (assq (1st args) (2nd args))]
           )
         ]
-        [(eqv?)
+        [(eq?)
           (if (equal? 2 argsLength)
-            (eqv? (1st args) (2nd args))
+            (eq? (1st args) (2nd args))
             (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- eqv? expects two arguments: ~s in ~s" argsLength args)
           )
         ]
@@ -282,7 +350,7 @@
         ]
         [(procedure?)
           (if (equal? 1 argsLength)
-            (procedure? (1st args))
+            (proc-val? (1st args))
             (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- procedure? expects one arguments: ~s in ~s" argsLength args)
           )
         ]
