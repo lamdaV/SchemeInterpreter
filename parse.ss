@@ -208,9 +208,6 @@
                   [(boolean? operator)
                     (eopl:error 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a boolean: ~s in ~s" operator datum)
                   ]
-                  [(list? operator)
-                    (eopl:error 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a list: ~s in ~s" operator datum)
-                  ]
                   [(vector? operator)
                     (eopl:error 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a vector: ~s in ~s" operator datum)
                   ]

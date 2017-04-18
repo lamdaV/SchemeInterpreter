@@ -48,7 +48,7 @@
    (name symbol?)
   ]
   [closure
-    (ids (list-of symbol?))
+    (variables (list-of symbol?))
     (bodies (list-of expression?))
     (env environment?)
   ]
