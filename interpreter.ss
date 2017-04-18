@@ -76,14 +76,13 @@
             variable
             identity-proc ; procedure to call if var is in env
             (lambda () ; procedure to call if var is not in env
-              (apply-env global-env 
-                variable ; look up its value.
-                identity-proc ; procedure to call if variable is in the environment
-                (lambda () (eopl:error 'apply-env ; procedure to call if variable not in env
-                  "variable not found in environment: ~s"
-                   variable)
-                )
-             )
+              (apply-env global-env
+                         variable ; look up its value.
+                         identity-proc ; procedure to call if variable is in the environment
+                         (lambda ()
+                           (error 'apply-env ; procedure to call if variable not in env
+                                  "[ ERROR ]: Unable to find variable in environment ~% --- variable not found in environment: ~s"
+                                  variable)))
             )
           )
         ]
@@ -105,16 +104,28 @@
           )
         ]
         [let-exp (let-type name variables values body)
-          (eval-bodies body (extend-env variables (eval-rands values env) env))
+          (cond
+            [(equal? 'let let-type)
+              (eval-bodies body (extend-env variables (eval-rands values env) env))
+            ]
+            [else
+              (error 'eval-exp "")
+            ]
+          )
         ]
         [lambda-exp (required optional body)
-          (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)
+          (error 'eval-exp "Bad abstract syntax: ~a" exp)
           ; TODO: later
         ]
         [lambda-exact-exp (variables body)
           (closure variables body env)
         ]
-        [set!-exp (variable value) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
+        [set!-exp (variable value)
+          (error 'eval-exp "[ ERROR ]: Bad abstract syntax: ~a" exp)
+        ]
+        [else
+          (error 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" exp)
+        ]
       )
     )
   )
