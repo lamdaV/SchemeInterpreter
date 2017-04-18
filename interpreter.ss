@@ -3,7 +3,14 @@
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form)))
+    (eval-exp form)
+  )
+)
+
+(define 1st car)
+(define 2nd cadr)
+(define 3rd caddr)
+(define 4th cadddr)
 
 ; eval-exp is the main component of the interpreter
 
@@ -18,6 +25,17 @@
 		                                      "variable not found in environment: ~s"
 			                                     variable)))
       ]
+      [if-then-exp (conditional true-exp)
+        (if (eval-exp conditional)
+          (eval-exp true-exp)
+        )
+      ]
+      [if-else-exp (conditional true-exp false-exp)
+        (if (eval-exp conditional)
+          (eval-exp true-exp)
+          (eval-exp false-exp)
+        )
+      ]
       [app-exp (operator arguments)
         (let ([proc-value (eval-exp operator)]
               [args (eval-rands arguments)])
@@ -30,7 +48,6 @@
 )
 
 ; evaluate the list of operands, putting results into a list
-
 (define eval-rands
   (lambda (rands)
     (map eval-exp rands)
@@ -40,17 +57,18 @@
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.
 ;  User-defined procedures will be added later.
-
 (define apply-proc
   (lambda (proc-value args)
     (cases proc-val proc-value
-      [prim-proc (operator) (apply-prim-proc operator args)]
+      [prim-proc (operator)
+        (apply-prim-proc operator args)
+      ]
 			; You will add other cases
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s"
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * add1 sub1 cons =))
+(define *prim-proc-names* '(+ - * add1 sub1 cons = list))
 
 (define init-env         ; for now, our initial global environment only contains
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -63,17 +81,17 @@
 
 ; Usually an interpreter must define each
 ; built-in procedure individually.  We are "cheating" a little bit.
-
 (define apply-prim-proc
   (lambda (prim-proc args)
     (case prim-proc
-      [(+) (+ (1st args) (2nd args))]
-      [(-) (- (1st args) (2nd args))]
-      [(*) (* (1st args) (2nd args))]
+      [(+) (apply + args)]
+      [(-) (apply - args)]
+      [(*) (apply * args)]
       [(add1) (+ (1st args) 1)]
       [(sub1) (- (1st args) 1)]
       [(cons) (cons (1st args) (2nd args))]
-      [(=) (= (1st args) (2nd args))]
+      [(=) (apply = args)]
+      [(list) (apply list args)]
       [else
         (error 'apply-prim-proc "Bad primitive procedure name: ~s" prim-op)
       ]
