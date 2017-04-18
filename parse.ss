@@ -26,7 +26,7 @@
       [(literal? datum) (lit-exp datum)]
       [(pair? datum)
         (cond
-          [(eqv? (car datum) 'quote) (parse-exp (cadr datum))]
+          [(eqv? (car datum) 'quote) (lit-exp (cadr datum))]
           [(eqv? (car datum) 'lambda) ; (lambda (variables) body)
             (if (> 3 (length datum))
               (eopl:error 'parse-exp "[ ERROR ]: malformed lambda expression ~% --- lambda requires an identifier, variable (x, (x), or (x . y)), and body ~s" datum)

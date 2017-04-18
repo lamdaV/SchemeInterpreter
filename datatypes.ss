@@ -4,7 +4,7 @@
 ; Expression datatype.
 (define-datatype expression expression?
   [var-exp (variable symbol?)]
-  [lit-exp (literal literal?)]
+  [lit-exp (literal (lambda (x) #t))]
   [app-exp
     (operator expression?)
     (arguments (list-of expression?))

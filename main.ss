@@ -14,6 +14,12 @@
   )
 )
 
+(define load-test
+  (lambda ()
+    (load "13-test.ss")
+  )
+)
+
 (load-all)
 
 (define l load-all) ; even easier!
