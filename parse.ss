@@ -237,7 +237,7 @@
       ]
       [lambda-exp (required optional body)
         (let ([decode-body (map unparse-exp body)])
-          (if (null? required)
+          (if (null? required) ; If the required arguments is an empty list, this is (lambda x ...) and not (lambda (x . y) ...)
             (cons* 'lambda optional decode-body)
             (cons* 'lambda (append required optional) decode-body)
           )

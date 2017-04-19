@@ -20,7 +20,7 @@
 ; evaluate the list of operands, putting results into a list
 (define eval-rands
   (lambda (rands env)
-    (map (lambda (x) (eval-exp x env)) rands)
+    (map (lambda (exp) (eval-exp exp env)) rands)
   )
 )
 
@@ -106,25 +106,29 @@
         [let-exp (let-type name variables values body)
           (cond
             [(equal? 'let let-type)
-              (eval-bodies body (extend-env variables (eval-rands values env) env))
+              (if name
+                (error 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name) ; TODO
+                (eval-bodies body (extend-env variables (eval-rands values env) env))
+              )
             ]
             [else
-              (error 'eval-exp "")
+              (error 'eval-exp "[ ERROR ]: Unsupported let type ~% --- let-type: ~s" let-type)
+              ; TODO:
             ]
           )
         ]
         [lambda-exp (required optional body)
-          (error 'eval-exp "Bad abstract syntax: ~a" exp)
+          (error 'eval-exp "[ ERROR ]: Unsupported lambda-exp ~% --- lambda expression: ~a" (unparse-exp exp))
           ; TODO: later
         ]
         [lambda-exact-exp (variables body)
           (closure variables body env)
         ]
         [set!-exp (variable value)
-          (error 'eval-exp "[ ERROR ]: Bad abstract syntax: ~a" exp)
+          (error 'eval-exp "[ ERROR ]: Unsupported operation ~% --- operation: ~s" (unparse-exp exp)) ; TODO
         ]
         [else
-          (error 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" exp)
+          (error 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" (unparse-exp exp))
         ]
       )
     )

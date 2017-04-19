@@ -14,7 +14,7 @@
     (body (list-of expression?))
   ]
   [lambda-exp ; used to handle (lambda (x . y) body) or (lambda x body) [required + optional/many argument lambda]
-    (required (list-of symbol?))
+    (required (list-of symbol?)) ; It may be an empty list. If so, it is (lambda x body)
     (optional symbol?)
     (body (list-of expression?))
   ]
