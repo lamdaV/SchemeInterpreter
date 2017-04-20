@@ -76,7 +76,12 @@
             (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- sub1 expects one argument: ~s in ~s" argsLength args)
           )
         ]
-        [(cons) (cons (1st args) (2nd args))]
+        [(cons)
+          (if (equal? 2 argsLength)
+            (cons (1st args) (2nd args))
+            (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- cons expects two arguments: ~s in ~s" argsLength args)
+          )
+        ]
         [(cdr)
           (cond
             [(not (equal? 1 argsLength)) (error 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdr expects one argument: ~s in ~s" argsLength args)]
