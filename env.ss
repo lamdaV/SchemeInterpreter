@@ -51,3 +51,16 @@
     )
   )
 )
+
+(define *prim-proc-names* '(+ - * / add1 sub1 = > < >= <= zero? not cons car cdr cadr caar cdar cddr caaar cdaar cadar caadr cddar cdadr caddr cdddr list null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline cadar map apply))
+
+(define init-env         ; for now, our initial global environment only contains
+  (extend-env            ; procedure names.  Recall that an environment associates
+     *prim-proc-names*   ;  a value (not an expression) with an identifier.
+     (map prim-proc
+          *prim-proc-names*)
+     (empty-env)
+  )
+)
+
+(define global-env init-env)

@@ -347,9 +347,31 @@
         [(=) (apply = args)]
         [(list) (apply list args)]
         [else
-          (errorf 'apply-prim-proc "Bad primitive procedure name: ~s" prim-op)
+          (errorf 'apply-prim-proc "Bad primitive procedure name: ~s" prim-proc)
         ]
       )
+    )
+  )
+)
+
+;  Apply a procedure to its arguments.
+;  At this point, we only have primitive procedures.
+;  User-defined procedures will be added later.
+(define apply-proc
+  (lambda (proc-value args)
+    (cases proc-val proc-value
+      [prim-proc (operator)
+        (apply-prim-proc operator args)
+      ]
+      [closure (ids bodies env)
+        (eval-bodies bodies
+          (extend-env ids args env)
+        )
+      ]
+			; You will add other cases
+      [else (errorf 'apply-proc
+                   "Attempt to apply bad procedure: ~s"
+                    proc-value)]
     )
   )
 )
