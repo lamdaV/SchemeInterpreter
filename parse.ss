@@ -29,7 +29,7 @@
           [(eqv? (car datum) 'quote) (lit-exp (cadr datum))]
           [(eqv? (car datum) 'lambda) ; (lambda (variables) body)
             (if (> 3 (length datum))
-              (eopl:error 'parse-exp "[ ERROR ]: malformed lambda expression ~% --- lambda requires an identifier, variable (x, (x), or (x . y)), and body ~s" datum)
+              (errorf 'parse-exp "[ ERROR ]: malformed lambda expression ~% --- lambda requires an identifier, variable (x, (x), or (x . y)), and body ~s" datum)
               (let ([variables (cadr datum)]
                     [body (map parse-exp (cddr datum))])
                 (cond
@@ -61,13 +61,13 @@
                     )
                   ]
                   [(not (list? variables))
-                    (eopl:error 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- variables must either be a symbol or a list of symbols: ~s in ~s" variables datum)
+                    (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- variables must either be a symbol or a list of symbols: ~s in ~s" variables datum)
                   ]
                   [(not (andmap symbol? variables))
-                    (eopl:error 'parse-exp "[ ERROR ]: malformed lambda variables ~% ---variables must be symbols ~s in ~s" variables datum)
+                    (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% ---variables must be symbols ~s in ~s" variables datum)
                   ]
                   [else
-                    (eopl:error 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- cause unknown: ~s in ~s" variables datum)
+                    (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- cause unknown: ~s in ~s" variables datum)
                   ]
                 )
               )
@@ -80,19 +80,19 @@
                   [parse-let (lambda (assignment-pair) ; let-helper
                                 (cond
                                   [(null? assignment-pair)
-                                    (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment. ~% --- a variable assignment cannot be empty: ~s" assignment-pair)
+                                    (errorf 'parse-exp "[ ERROR ]: malformed let assignment. ~% --- a variable assignment cannot be empty: ~s" assignment-pair)
                                   ]
                                   [(improper? assignment-pair)
-                                    (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment. ~% --- a variable assignment cannot be an improper list: ~s" assignment-pair)
+                                    (errorf 'parse-exp "[ ERROR ]: malformed let assignment. ~% --- a variable assignment cannot be an improper list: ~s" assignment-pair)
                                   ]
                                   [(not (equal? 2 (length assignment-pair)))
-                                    (eopl:error 'parse-exp "[ ERROR ]: malformed let assignment ~% --- all variable assignment must of length 2: ~s" assignment-pair)
+                                    (errorf 'parse-exp "[ ERROR ]: malformed let assignment ~% --- all variable assignment must of length 2: ~s" assignment-pair)
                                   ]
                                   [else
                                     (let ([variable (car assignment-pair)]
                                           [value (cadr assignment-pair)])
                                       (if (not (symbol? variable))
-                                        (eopl:error 'parse-exp "[ ERROR ]: malformed let variable assignment ~% --- all variables being assigned must be a symbol: ~s from ~s" variable assignment-pair)
+                                        (errorf 'parse-exp "[ ERROR ]: malformed let variable assignment ~% --- all variables being assigned must be a symbol: ~s from ~s" variable assignment-pair)
                                         (list variable (parse-exp value))
                                       )
                                     )
@@ -102,7 +102,7 @@
                   ])
               (cond
                 [(> 3 letLength)
-                  (eopl:error 'parse-exp "[ ERROR ]: malformed let expression ~% --- let requires an identifier, variable assignment, and body: ~s" datum)
+                  (errorf 'parse-exp "[ ERROR ]: malformed let expression ~% --- let requires an identifier, variable assignment, and body: ~s" datum)
                 ]
                 [(symbol? (cadr datum)) ; named length
                   (let ([name (cadr datum)]
@@ -110,13 +110,13 @@
                         [body (cdddr datum)])
                     (cond
                       [(null? body)
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed NAMED let expression ~% --- body cannot be empty: ~s in ~s" body)
+                        (errorf 'parse-exp "[ ERROR ]: malformed NAMED let expression ~% --- body cannot be empty: ~s in ~s" body)
                       ]
                       [(not (list? variable-assignment))
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed NAMED let variable assignment ~% --- variable assignment must be a list of list: ~s" variable-assignment)
+                        (errorf 'parse-exp "[ ERROR ]: malformed NAMED let variable assignment ~% --- variable assignment must be a list of list: ~s" variable-assignment)
                       ]
                       [(improper? variable-assignment)
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed NAMED let variable assignment ~% --- variable assignment cannot be an improper list: ~s" variable-assignment)
+                        (errorf 'parse-exp "[ ERROR ]: malformed NAMED let variable assignment ~% --- variable assignment cannot be an improper list: ~s" variable-assignment)
                       ]
                       [else
                         (let* ([variable-value (map parse-let variable-assignment)]
@@ -135,13 +135,13 @@
                         [body (cddr datum)])
                     (cond
                       [(null? body)
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed let expression ~% --- body cannot be empty: ~s" body)
+                        (errorf 'parse-exp "[ ERROR ]: malformed let expression ~% --- body cannot be empty: ~s" body)
                       ]
                       [(not (list? variable-assignment))
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed let variable assignment ~% --- variable assignment must be a list of list: ~s" variable-assignment)
+                        (errorf 'parse-exp "[ ERROR ]: malformed let variable assignment ~% --- variable assignment must be a list of list: ~s" variable-assignment)
                       ]
                       [(improper? variable-assignment)
-                        (eopl:error 'parse-exp "[ ERROR ]: malformed let variable assignment ~% --- variable assignment cannot be an improper list: ~s" variable-assignment)
+                        (errorf 'parse-exp "[ ERROR ]: malformed let variable assignment ~% --- variable assignment cannot be an improper list: ~s" variable-assignment)
                       ]
                       [else
                         (let* ([variable-value (map parse-let variable-assignment)]
@@ -175,7 +175,7 @@
                   )
                 ]
                 [else
-                  (eopl:error 'parse-exp "[ ERROR ]: malformed if statement ~% --- if statements must include an identifier, conditional, true-expression, and/or false-expression: ~s" datum)
+                  (errorf 'parse-exp "[ ERROR ]: malformed if statement ~% --- if statements must include an identifier, conditional, true-expression, and/or false-expression: ~s" datum)
                 ]
               )
             )
@@ -183,10 +183,10 @@
           [(eqv? (car datum) 'set!) ; (set! (variable) (value))
             (cond
               [(not (equal? 3 (length datum)))
-                (eopl:error 'parse-exp "[ ERROR ]: malformed set! ~% --- set! statements must include an identifier, variable symbol, and value: ~s" datum)
+                (errorf 'parse-exp "[ ERROR ]: malformed set! ~% --- set! statements must include an identifier, variable symbol, and value: ~s" datum)
               ]
               [(not (symbol? (caddr datum)))
-                (eopl:error 'parse-exp "[ ERROR ]: malformed set! ~% --- set! variable must be a symbol: ~s in ~s" (caddr datum) datum)
+                (errorf 'parse-exp "[ ERROR ]: malformed set! ~% --- set! variable must be a symbol: ~s in ~s" (caddr datum) datum)
               ]
               [else
                   (let ([variable (cadr datum)]
@@ -198,18 +198,18 @@
           ]
           [else ; (app-exp ...)
             (if (improper? datum)
-              (eopl:error 'parse-exp "[ ERROR ]: malformed app-exp ~% --- improper list ~s" datum)
+              (errorf 'parse-exp "[ ERROR ]: malformed app-exp ~% --- improper list ~s" datum)
               (let ([operator (car datum)]
                     [arguments (cdr datum)])
                 (cond
                   [(number? operator)
-                    (eopl:error 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a number: ~s in ~s" operator datum)
+                    (errorf 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a number: ~s in ~s" operator datum)
                   ]
                   [(boolean? operator)
-                    (eopl:error 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a boolean: ~s in ~s" operator datum)
+                    (errorf 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a boolean: ~s in ~s" operator datum)
                   ]
                   [(vector? operator)
-                    (eopl:error 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a vector: ~s in ~s" operator datum)
+                    (errorf 'parse-exp "[ ERROR ]: malformed app-exp operator ~% --- operator cannot be a vector: ~s in ~s" operator datum)
                   ]
                   [else
                     (app-exp (parse-exp operator) (map parse-exp arguments))
@@ -220,7 +220,7 @@
           ]
         )
       ]
-      [else (eopl:error 'parse-exp "[ ERROR ]: malformed expression ~% --- this expression does not match any expected expression: ~s" datum)]
+      [else (errorf 'parse-exp "[ ERROR ]: malformed expression ~% --- this expression does not match any expected expression: ~s" datum)]
     )
   )
 )

@@ -1,4 +1,3 @@
-
 ;; Parsed expression datatypes
 
 ; Expression datatype.

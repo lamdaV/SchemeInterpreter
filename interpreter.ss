@@ -39,7 +39,7 @@
         )
       ]
 			; You will add other cases
-      [else (error 'apply-proc
+      [else (errorf 'apply-proc
                    "Attempt to apply bad procedure: ~s"
                     proc-value)])))
 
@@ -80,7 +80,7 @@
                          variable ; look up its value.
                          identity-proc ; procedure to call if variable is in the environment
                          (lambda ()
-                           (error 'apply-env ; procedure to call if variable not in env
+                           (errorf 'apply-env ; procedure to call if variable not in env
                                   "[ ERROR ]: Unable to find variable in environment ~% --- variable not found in environment: ~s"
                                   variable)))
             )
@@ -89,6 +89,7 @@
         [if-then-exp (conditional true-exp)
           (if (eval-exp conditional env)
             (eval-exp true-exp env)
+            (void)
           )
         ]
         [if-else-exp (conditional true-exp false-exp)
@@ -107,28 +108,32 @@
           (cond
             [(equal? 'let let-type)
               (if name
-                (error 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name) ; TODO
+                (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name) ; TODO
                 (eval-bodies body (extend-env variables (eval-rands values env) env))
               )
             ]
             [else
-              (error 'eval-exp "[ ERROR ]: Unsupported let type ~% --- let-type: ~s" let-type)
+              (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- let-type: ~s" let-type)
               ; TODO:
             ]
           )
         ]
         [lambda-exp (required optional body)
-          (error 'eval-exp "[ ERROR ]: Unsupported lambda-exp ~% --- lambda expression: ~a" (unparse-exp exp))
-          ; TODO: later
+          ;(errorf 'eval-exp "[ ERROR ]: Unsupported lambda-exp ~% --- lambda expression: ~a" (unparse-exp exp))
+          ;; TODO: later
+          (if (null? required)
+            (closure (list optional) body env)
+            (closure (reverse (cons optional (reverse required))) body env)
+          )
         ]
         [lambda-exact-exp (variables body)
           (closure variables body env)
         ]
         [set!-exp (variable value)
-          (error 'eval-exp "[ ERROR ]: Unsupported operation ~% --- operation: ~s" (unparse-exp exp)) ; TODO
+          (errorf 'eval-exp "[ ERROR ]: Unsupported operation ~% --- operation: ~s" (unparse-exp exp)) ; TODO
         ]
         [else
-          (error 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" (unparse-exp exp))
+          (errorf 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" (unparse-exp exp))
         ]
       )
     )

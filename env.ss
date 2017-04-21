@@ -7,7 +7,7 @@
 
 (define extend-env
   (lambda (syms vals env)
-    (extended-env-record syms vals env)
+    (extended-env-record syms vals env) ; TODO SPLIT syms with vals for improper list case.
   )
 )
 
