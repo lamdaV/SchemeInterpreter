@@ -204,24 +204,38 @@
           ]
           [(eqv? (car datum) 'begin)
             (let ([body (map parse-exp (cdr datum))])
-              (begin-exp (map parse-exp (cdr datum)))
+              (begin-exp body)
             )
           ]
           [(eqv? (car datum) 'cond)
-            (cond-exp 
-              (map 
-                (lambda (x)
-                  (if (equal? 'else (car x))
-                    'else
-                    (parse-exp (car x))
+            (cond
+              [(not (> (length datum) 1))
+                (errorf 'parse-exp "[ ERROR ]: malformed cond ~% --- cond statements must include an identifier, and one or more conditions and expressions ~s" datum)
+              ]
+              [(not (andmap list? (cdr datum)))
+                (errorf 'parse-exp "[ ERROR ]: malformed cond! ~% --- all conditional expressions must be a list ~s" datum)
+              ]
+              [else
+                (letrec ([parse-conditional (lambda (x)
+                                              (let ([conditional (car x)])
+                                                (if (equal? 'else conditional)
+                                                  'else
+                                                  (parse-exp conditional)
+                                                )
+                                              )
+                                            )]
+                         [parse-expressions (lambda (x)
+                                              (let ([expressions (cdr x)])
+                                                (map parse-exp expressions)
+                                              )
+                                            )]
+                         [conditional-expressions (cdr datum)])
+                  (cond-exp
+                    (map parse-conditional conditional-expressions)
+                    (map parse-expressions conditional-expressions)
                   )
                 )
-                (cdr datum)
-              ) 
-              (map
-                (lambda (x) (map parse-exp (cdr x)))
-                (cdr datum)
-              ) 
+              ]
             )
           ]
           [(eqv? (car datum) 'and)
@@ -270,13 +284,13 @@
         literal
       ]
       [cond-exp (conditions bodies)
-        (cons 
+        (cons
           'cond
           (map
             (lambda (condition body)
               (cons (if (equal? 'else condition) 'else (unparse-exp condition)) (map unparse-exp body))
             )
-            conditions 
+            conditions
             bodies
           )
         )
