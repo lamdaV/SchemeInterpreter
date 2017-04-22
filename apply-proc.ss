@@ -31,25 +31,25 @@
         [(<)
           (if (and (not (null? args)) ((list-of number?) args))
             (apply < args)
-            (errorf 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- < expects arguments a list of numbers: ~s" args)
+            (errorf 'apply-prim-proc "[ ERROR ]: Malformed < argument ~% --- < expects arguments a list of numbers: ~s" args)
           )
         ]
         [(>)
           (if (and (not (null? args)) ((list-of number?) args))
             (apply > args)
-            (errorf 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- > expects arguments a list of numbers: ~s" args)
+            (errorf 'apply-prim-proc "[ ERROR ]: Malformed > argument ~% --- > expects arguments a list of numbers: ~s" args)
           )
         ]
         [(>=)
           (if (and (not (null? args)) ((list-of number?) args))
             (apply >= args)
-            (errorf 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- >= expects arguments a list of numbers: ~s" args)
+            (errorf 'apply-prim-proc "[ ERROR ]: Malformed >= argument ~% --- >= expects arguments a list of numbers: ~s" args)
           )
         ]
         [(<=)
           (if (and (not (null? args)) ((list-of number?) args))
             (apply <= args)
-            (errorf 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- <= expects arguments a list of numbers: ~s" args)
+            (errorf 'apply-prim-proc "[ ERROR ]: Malformed <= argument ~% --- <= expects arguments a list of numbers: ~s" args)
           )
         ]
         [(not)
@@ -376,13 +376,36 @@
       ]
       [closure (variables bodies env)
         (eval-bodies bodies
-          (extend-env variables (bind-args variables args) env)
+          (extend-env (pair->list variables) (bind-args variables args '()) env)
         )
       ]
 			; You will add other cases
       [else (errorf 'apply-proc
                    "Attempt to apply bad procedure: ~s"
                     proc-value)]
+    )
+  )
+)
+
+(define pair->list
+  (lambda (x)
+    (cond
+      [(null? x) x] 
+      [(null? (car x)) (list (cdr x))]
+      [else (letrec 
+              ([loop 
+                (lambda (x acc)
+                  (cond
+                    [(symbol? x) (reverse (cons x acc))]
+                    [(null? x) (reverse acc)]
+                    [else (loop (cdr x) (cons (car x) acc))]
+                  )
+                )
+              ]
+              )
+            (loop x '())
+          )
+      ]
     )
   )
 )

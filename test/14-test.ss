@@ -144,6 +144,31 @@
   )
 )
 
+(define (test-pair-of-symbols?)
+  (let ([correct '(
+          #t
+          #t
+          #t
+          #t
+          #t
+          #t
+          #t
+    )]
+     [answers
+       (list
+          (pair-of-symbols? '(y . x)) 
+          (pair-of-symbols? '(x))
+          (pair-of-symbols? '(x y z w))
+          (pair-of-symbols? '(() . x))
+          (pair-of-symbols? '(() . x))
+          (pair-of-symbols? '(x y z . w))
+          (pair-of-symbols? '(x y z . w))
+       )
+     ])
+    (display-results correct answers equal?)
+  )
+)
+
 (define (test-syntactic-expansion)
     (let ([correct '(
 		     7

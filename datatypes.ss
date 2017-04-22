@@ -53,6 +53,18 @@
   ]
 )
 
+(define pair-of-symbols?
+  (lambda (x)
+    (cond
+      [(symbol? x) #t]
+      [(null? x) #t] 
+      [(equal? '() (car x)) #t]
+      [(symbol? (car x)) (pair-of-symbols? (cdr x))]
+      [else #f]
+    )
+  )
+)
+
 ; datatype for procedures.  At first there is only one
 ; kind of procedure, but more kinds will be added later.
 
@@ -61,7 +73,7 @@
    (name symbol?)
   ]
   [closure
-    (variables (list-of symbol?))
+    (variables pair-of-symbols?)
     (bodies (list-of expression?))
     (env environment?)
   ]
