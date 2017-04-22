@@ -360,7 +360,7 @@
       [(null? variables) (reverse accumulator)]
       [(null? (car variables)) (reverse (cons arguments accumulator))]
       [(symbol? (cdr variables)) (reverse (cons* (cdr arguments) (car arguments) accumulator))]
-      [else (reverse (bind-args (cdr variables) (cdr arguments) (cons (car arguments) accumulator)))]
+      [else (bind-args (cdr variables) (cdr arguments) (cons (car arguments) accumulator))]
     )
   )
 )
@@ -390,10 +390,10 @@
 (define pair->list
   (lambda (x)
     (cond
-      [(null? x) x] 
+      [(null? x) x]
       [(null? (car x)) (list (cdr x))]
-      [else (letrec 
-              ([loop 
+      [else (letrec
+              ([loop
                 (lambda (x acc)
                   (cond
                     [(symbol? x) (reverse (cons x acc))]
