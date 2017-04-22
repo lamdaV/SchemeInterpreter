@@ -404,9 +404,7 @@
         )
       ]
 			; You will add other cases
-      [else (errorf 'apply-proc
-                   "Attempt to apply bad procedure: ~s"
-                    proc-value)]
+      [else (errorf 'apply-proc "[ ERROR ]: Malformed proc-value ~% ---  unsuppported proc-value: ~s" proc-value)]
     )
   )
 )
