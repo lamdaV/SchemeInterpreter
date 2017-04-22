@@ -19,7 +19,7 @@
 
 (define eval-one-exp
   (lambda (x)
-    (top-level-eval (parse-exp x))
+    (top-level-eval (syntax-expand (parse-exp x)))
   )
 )
 
@@ -53,6 +53,7 @@
             )
           )
         ]
+        [void-exp () (void)]
         [if-then-exp (conditional true-exp)
           (if (eval-exp conditional env)
             (eval-exp true-exp env)
@@ -64,6 +65,12 @@
             (eval-exp true-exp env)
             (eval-exp false-exp env)
           )
+        ]
+        [cond-exp (conditionals bodies)
+          (eval-exp (syntax-expand exp) env)
+        ]
+        [begin-exp (body)
+          (eval-exp (syntax-expand exp) env)
         ]
         [app-exp (operator arguments)
           (let ([proc-value (eval-exp operator env)]
@@ -96,6 +103,12 @@
         ]
         [set!-exp (variable value)
           (errorf 'eval-exp "[ ERROR ]: Unsupported operation ~% --- operation: ~s" (unparse-exp exp)) ; TODO
+        ]
+        [and-exp (conditionals)
+          (eval-exp (syntax-expand exp) env)
+        ]
+        [or-exp (conditionals)
+          (eval-exp (syntax-expand exp) env)
         ]
         [else
           (errorf 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" (unparse-exp exp))

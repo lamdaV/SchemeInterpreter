@@ -37,6 +37,26 @@
     (variable symbol?)
     (value expression?)
   ]
+  [begin-exp
+    (body (list-of expression?))
+  ]
+  [void-exp]
+  [cond-exp
+    (conditions 
+      (list-of 
+        (lambda (x)
+          (or (expression? x) (equal? 'else x))
+        )
+      )
+    )
+    (bodies (list-of (list-of expression?)))
+  ]
+  [and-exp 
+    (conditionals (list-of expression?))
+  ]
+  [or-exp
+    (conditionals (list-of expression?))
+  ]
 )
 
 ;; environment type definitions

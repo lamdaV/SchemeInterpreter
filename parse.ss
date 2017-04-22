@@ -26,6 +26,12 @@
       [(literal? datum) (lit-exp datum)]
       [(pair? datum)
         (cond
+          [(eqv? (car datum) 'void)
+            (if (equal? 1 (length datum))
+              (void-exp)
+              (errorf 'parse-exp "[ ERROR ]: malformed void exppression ~% --- void expression takes no arguments ~s" datum)
+            )
+          ]
           [(eqv? (car datum) 'quote) (lit-exp (cadr datum))]
           [(eqv? (car datum) 'lambda) ; (lambda (variables) body)
             (if (> 3 (length datum))
@@ -196,6 +202,34 @@
               ]
             )
           ]
+          [(eqv? (car datum) 'begin)
+            (let ([body (map parse-exp (cdr datum))])
+              (begin-exp (map parse-exp (cdr datum)))
+            )
+          ]
+          [(eqv? (car datum) 'cond)
+            (cond-exp 
+              (map 
+                (lambda (x)
+                  (if (equal? 'else (car x))
+                    'else
+                    (parse-exp (car x))
+                  )
+                )
+                (cdr datum)
+              ) 
+              (map
+                (lambda (x) (map parse-exp (cdr x)))
+                (cdr datum)
+              ) 
+            )
+          ]
+          [(eqv? (car datum) 'and)
+            (and-exp (map parse-exp (cdr datum)))
+          ]
+          [(eqv? (car datum) 'or)
+            (or-exp (map parse-exp (cdr datum)))
+          ]
           [else ; (app-exp ...)
             (if (improper? datum)
               (errorf 'parse-exp "[ ERROR ]: malformed app-exp ~% --- improper list ~s" datum)
@@ -234,6 +268,18 @@
       ]
       [lit-exp (literal)
         literal
+      ]
+      [cond-exp (conditions bodies)
+        (cons 
+          'cond
+          (map
+            (lambda (condition body)
+              (cons (if (equal? 'else condition) 'else (unparse-exp condition)) (map unparse-exp body))
+            )
+            conditions 
+            bodies
+          )
+        )
       ]
       [lambda-exp (required optional body)
         (let ([decode-body (map unparse-exp body)])
@@ -280,6 +326,20 @@
         (let ([decode-value (unparse-exp value)])
           (cons* 'set! variable value)
         )
+      ]
+      [begin-exp (body)
+        (let ([decode-value (map unparse-exp body)])
+          (cons 'begin decode-value)
+        )
+      ]
+      [void-exp ()
+        (list 'void)
+      ]
+      [and-exp (conditionals)
+        (cons 'and conditionals)
+      ]
+      [or-exp (conditionals)
+        (cons 'or conditionals)
       ]
     )
   )

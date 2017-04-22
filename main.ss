@@ -11,6 +11,7 @@
     (load "env.ss")
     (load "apply-proc.ss")
     (load "parse.ss")
+    (load "syntax-expand.ss")
     (load "evaluator.ss")
     (load "interpreter.ss")
   )
