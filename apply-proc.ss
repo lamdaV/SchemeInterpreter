@@ -1,3 +1,5 @@
+
+
 ; Usually an interpreter must define each
 ; built-in procedure individually.  We are "cheating" a little bit.
 (define apply-prim-proc
@@ -9,6 +11,9 @@
             (apply + args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed + argument ~% --- + expects arguments a list of numbers: ~s" args)
           )
+        ]
+        [(apply)
+          (apply-proc (car args) (apply cons* (cdr args)))
         ]
         [(-)
           (if ((list-of number?) args)
