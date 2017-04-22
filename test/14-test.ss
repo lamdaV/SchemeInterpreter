@@ -119,6 +119,31 @@
 	     )])
       (display-results correct answers equal?)))
 
+(define (test-bind-args)
+  (let ([correct '(
+          (1 ())
+          (2)
+          (1 2 3 4)
+          (())
+          ((1 2 3))
+          (1 2 3 (4))
+          (1 2 3 (4 5))
+    )]
+     [answers
+       (list
+          (bind-args '(y . x) '(1) '()) 
+          (bind-args '(x) '(2) '())
+          (bind-args '(x y z w) '(1 2 3 4) '())
+          (bind-args '(() . x) '() '())
+          (bind-args '(() . x) '(1 2 3) '())
+          (bind-args '(x y z . w) '(1 2 3 4) '())
+          (bind-args '(x y z . w) '(1 2 3 4 5) '())
+       )
+     ])
+    (display-results correct answers equal?)
+  )
+)
+
 (define (test-syntactic-expansion)
     (let ([correct '(
 		     7

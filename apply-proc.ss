@@ -347,9 +347,20 @@
         [(=) (apply = args)]
         [(list) (apply list args)]
         [else
-          (errorf 'apply-prim-proc "Bad primitive procedure name: ~s" prim-proc)
+          (errorf 'apply-prim-proc "[ ERROR ]: Bad primitive procedure name ~% --- undefined primitive procedure: ~s" prim-proc)
         ]
       )
+    )
+  )
+)
+
+(define bind-args
+  (lambda (variables arguments accumulator)
+    (cond
+      [(null? variables) (reverse accumulator)]
+      [(null? (car variables)) (reverse (cons arguments accumulator))]
+      [(symbol? (cdr variables)) (reverse (cons* (cdr arguments) (car arguments) accumulator))]
+      [else (reverse (bind-args (cdr variables) (cdr arguments) (cons (car arguments) accumulator)))]
     )
   )
 )
@@ -363,9 +374,9 @@
       [prim-proc (operator)
         (apply-prim-proc operator args)
       ]
-      [closure (ids bodies env)
+      [closure (variables bodies env)
         (eval-bodies bodies
-          (extend-env ids args env)
+          (extend-env variables (bind-args variables args) env)
         )
       ]
 			; You will add other cases

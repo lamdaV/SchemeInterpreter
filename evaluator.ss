@@ -89,8 +89,8 @@
           ;(errorf 'eval-exp "[ ERROR ]: Unsupported lambda-exp ~% --- lambda expression: ~a" (unparse-exp exp))
           ;; TODO: later
           (if (null? required)
-            (closure (list optional) body env)
-            (closure (reverse (cons optional (reverse required))) body env)
+            (closure (cons required optional) body env)
+            (closure (append required optional) body env)
           )
         ]
         [lambda-exact-exp (variables body)
