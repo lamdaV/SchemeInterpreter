@@ -12,9 +12,6 @@
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed + argument ~% --- + expects arguments a list of numbers: ~s" args)
           )
         ]
-        [(apply)
-          (apply-proc (car args) (apply cons* (cdr args)))
-        ]
         [(-)
           (if ((list-of number?) args)
             (apply - args)
@@ -351,6 +348,28 @@
         ]
         [(=) (apply = args)]
         [(list) (apply list args)]
+        [(apply)
+          (cond
+            [(< argsLength 2)
+              (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of apply arguments ~% --- apply expects at least 2 arguments: ~s in ~s" argsLength args)
+            ]
+            [(not (proc-val? (car args)))
+              (errorf 'apply-prim-proc "[ ERROR ]: Malformed apply argument ~% --- apply's first argument must be a procedure: ~s in ~s" (car args) args)
+            ]
+            [(not (list? (car (last-pair args))))
+              (errorf 'apply-prim-proc "[ ERROR ]: Malformed apply arguments ~% --- apply's last argument be a list: ~s in ~s" (car (last-pair args)) args)
+            ]
+            [else
+              (apply-proc (car args) (apply cons* (cdr args)))
+            ]
+          )
+        ]
+        [(map)
+          (let ([proc (car args)]
+                [align-args (apply map list (cdr args))])
+            (map (lambda (arg) (apply-proc proc arg)) align-args)
+          )
+        ]
         [else
           (errorf 'apply-prim-proc "[ ERROR ]: Bad primitive procedure name ~% --- undefined primitive procedure: ~s" prim-proc)
         ]
