@@ -1,10 +1,10 @@
 (define syntax-expand
   (lambda (exp)
-  	(cases expression exp 
+  	(cases expression exp
   		[or-exp (conditionals)
   			(if (null? conditionals)
   				(lit-exp #t)
-  				(letrec 
+  				(letrec
 	  				([or-expansion
 	  					(lambda (conds)
 	  						(if (null? (cdr conds))
@@ -24,7 +24,7 @@
   		[and-exp (conditionals)
   			(if (null? conditionals)
   				(lit-exp #t)
-  				(letrec 
+  				(letrec
 	  				([and-expansion
 	  					(lambda (conds)
 	  						(if (null? (cdr conds))
@@ -49,7 +49,7 @@
   	  ]
   	  [cond-exp (conditions bodies)
   	  	(letrec
-  	  		([cond-expansion 
+  	  		([cond-expansion
   	  			(lambda (conditions bodies)
   	  				(if (null? (cdr conditions))
   	  					(if (equal? 'else (car conditions))
@@ -70,6 +70,23 @@
   	  		(cond-expansion conditions bodies)
   	  	)
   	  ]
+      [let-exp (let-type name variables values body)
+        (cond
+          [(equal? let-type 'let*)
+            (letrec ([let*-expansion (lambda (variables values)
+                                      (if (null? variables)
+                                        (map syntax-expand body)
+                                        (list (let-exp 'let name (list (car variables)) (list (car values)) (let*-expansion (cdr variables) (cdr values))))
+                                      )
+                                    )])
+              (let-exp 'let name (list (car variables)) (list (car values)) (let*-expansion (cdr variables) (cdr values)))
+            )
+          ]
+          [else ; Other let-types
+            exp
+          ]
+        )
+      ]
   	  [else exp]
   	)
   )
