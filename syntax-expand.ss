@@ -109,6 +109,9 @@
           ]
         )
       ]
+      [while-exp (test body)
+        (if-else-exp (syntax-expand test) (expand-begin body) exp)
+      ]
   	  [else exp]
   	)
   )

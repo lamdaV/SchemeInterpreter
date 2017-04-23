@@ -101,14 +101,6 @@
   ]
   [void-exp]
   [cond-exp
-    ;(conditions
-    ;  (list-of
-    ;    (lambda (x)
-    ;      (or (expression? x) (equal? 'else x))
-    ;    )
-    ;  )
-    ;)
-    ;(bodies (list-of (list-of expression?)))
     (clauses (list-of cond-clause?))
   ]
   [and-exp
@@ -120,6 +112,10 @@
   [case-exp
     (key list?)
     (clauses (list-of case-clause?))
+  ]
+  [while-exp
+    (test expression?)
+    (body (list-of expression?))
   ]
 )
 

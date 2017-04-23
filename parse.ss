@@ -245,7 +245,7 @@
               [else
                 (let ([key (parse-exp (cadr datum))]
                       [clauses (map (lambda (x)
-                                      (let ([identifier (car x)] 
+                                      (let ([identifier (car x)]
                                             [body (map parse-exp (cdr x))])
                                         (if (equal? 'else identifier)
                                           (else-clause body)
@@ -255,6 +255,19 @@
                                     )
                                     (cddr datum))])
                   (case-exp key clauses)
+                )
+              ]
+            )
+          ]
+          [(eqv? (car datum) 'while)
+            (cond
+              [(< (length datum) 3)
+                (errorf 'parse-exp "[ ERROR ]: malformed while-exp ~% --- while expressions have an identifier, test, and one or many bodies: ~s" datum)
+              ]
+              [else
+                (let ([test (parse-exp (cadr datum))]
+                      [body (map parse-exp (cddr datum))])
+                  (while-exp test body)
                 )
               ]
             )
@@ -329,7 +342,7 @@
                                  )])
           (cons* 'case (unparse-exp key) (map unparse-clause clauses))
         )
-      ] ; TODO
+      ]
       [lambda-exp (required optional body)
         (let ([decode-body (map unparse-exp body)])
           (if (null? required) ; If the required arguments is an empty list, this is (lambda x ...) and not (lambda (x . y) ...)
@@ -389,6 +402,12 @@
       ]
       [or-exp (conditionals)
         (cons 'or conditionals)
+      ]
+      [while-exp (test body)
+        (let ([decode-test (unparse-exp test)]
+              [decode-body (map unparse-exp body)])
+          (cons* 'while decode-test decode-body)
+        )
       ]
     )
   )

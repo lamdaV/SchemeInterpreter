@@ -91,7 +91,7 @@
             ]
             [(equal? 'let* let-type)
               (if name
-                (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let* unsupported: ~s" name) ; TODO
+                (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let* unsupported: ~s" name)
                 (eval-exp (syntax-expand exp) env)
               )
             ]
@@ -117,6 +117,9 @@
           (eval-exp (syntax-expand exp) env)
         ]
         [or-exp (conditionals)
+          (eval-exp (syntax-expand exp) env)
+        ]
+        [while-exp (test body)
           (eval-exp (syntax-expand exp) env)
         ]
         [else
