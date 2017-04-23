@@ -3,7 +3,7 @@
   	(cases expression exp
   		[or-exp (conditionals)
   			(if (null? conditionals)
-  				(lit-exp #t)
+  				(lit-exp #f) ; if there are no args
   				(letrec
 	  				([or-expansion
 	  					(lambda (conds)
@@ -11,7 +11,7 @@
 	  							(syntax-expand (car conds))
 	  							(if-else-exp
 		  							(syntax-expand (car conds))
-		  							(lit-exp #t)
+		  							(car conds)
 		  							(or-exp (cdr conds))
 		  						)
 	  						)
@@ -110,7 +110,7 @@
         )
       ]
       [while-exp (test body)
-        (if-else-exp (syntax-expand test) (expand-begin body) exp)
+        (if-then-exp (syntax-expand test) (expand-begin (append body (list exp))))
       ]
   	  [else exp]
   	)
