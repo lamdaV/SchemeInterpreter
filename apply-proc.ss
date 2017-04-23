@@ -30,6 +30,16 @@
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- / expects arguments a list of numbers: ~s" args)
           )
         ]
+        [(quotient)
+          (cond 
+            [(not (and (equal? argsLength 2) (andmap integer? args)))
+              (errorf 'apply-prim-proc "[ ERROR ]: Malformed quotient argument ~% --- quotient expects exactly two integer arguments: ~s" args)
+            ]
+            [else
+              (apply quotient args)
+            ]
+          )
+        ]
         [(<)
           (if (and (not (null? args)) ((list-of number?) args))
             (apply < args)
