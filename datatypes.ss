@@ -1,5 +1,48 @@
 ;; Parsed expression datatypes
 
+(define clause? ; ((objs ...) e1 e2 ...)
+  (lambda (x)
+    (let ([length (length x)])
+      (cond
+        [(< length 2) #f]
+        [(not (list? (car x))) #f]
+        [(not (andmap expression? (cdr x))) #f]
+        [else #t]
+      )
+    )
+  )
+)
+
+(define-datatype clause clause?
+  [cond-clause
+    (conditonal expression?)
+    (body (list-of expression?))
+  ]
+  [case-clause
+    (keys list?)
+    (body (list-of expression?))
+  ]
+  [else-clause
+    (body (list-of expression?))
+  ]
+)
+
+(define cond-clause?
+  (lambda (c)
+    (cases clause c
+      [cond-clause (conditional body)
+        #t
+      ]
+      [else-clause (body)
+        #t
+      ]
+      [else
+        #f
+      ]
+    )
+  )
+)
+
 ; Expression datatype.
 (define-datatype expression expression?
   [var-exp (variable symbol?)]
@@ -42,20 +85,25 @@
   ]
   [void-exp]
   [cond-exp
-    (conditions 
-      (list-of 
-        (lambda (x)
-          (or (expression? x) (equal? 'else x))
-        )
-      )
-    )
-    (bodies (list-of (list-of expression?)))
+    ;(conditions
+    ;  (list-of
+    ;    (lambda (x)
+    ;      (or (expression? x) (equal? 'else x))
+    ;    )
+    ;  )
+    ;)
+    ;(bodies (list-of (list-of expression?)))
+    (clauses (list-of cond-clause?))
   ]
-  [and-exp 
+  [and-exp
     (conditionals (list-of expression?))
   ]
   [or-exp
     (conditionals (list-of expression?))
+  ]
+  [case-exp
+    (key expression?)
+    (clauses (list-of clause?))
   ]
 )
 
@@ -77,7 +125,7 @@
   (lambda (x)
     (cond
       [(symbol? x) #t]
-      [(null? x) #t] 
+      [(null? x) #t]
       [(equal? '() (car x)) #t]
       [(symbol? (car x)) (pair-of-symbols? (cdr x))]
       [else #f]

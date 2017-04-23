@@ -47,28 +47,55 @@
   	  		(app-exp (lambda-exact-exp '() body) '())
   	  	)
   	  ]
-  	  [cond-exp (conditions bodies)
-  	  	(letrec
-  	  		([cond-expansion
-  	  			(lambda (conditions bodies)
-  	  				(if (null? (cdr conditions))
-  	  					(if (equal? 'else (car conditions))
-  	  						(expand-begin (car bodies))
-  	  						(if-then-exp
-  	  							(syntax-expand (car conditions))
-  	  							(expand-begin (car bodies))
-  	  						)
-  	  					)
-  	  					(if-else-exp
-	  	  					(syntax-expand (car conditions))
-	  	  					(expand-begin (car bodies))
-	  	  					(cond-expansion (cdr conditions) (cdr bodies))
-	  	  				)
-  	  				)
-  	  			)
-  	  		])
-  	  		(cond-expansion conditions bodies)
-  	  	)
+  	  [cond-exp (clauses)
+  	  	(letrec ([cond-expansion
+  	  			(lambda (clauses)
+              (let ([c (car clauses)])
+                (if (null? (cdr clauses))
+                  (cases clause c
+                    [cond-clause (conditional body)
+                      (if-then-exp (syntax-expand conditional) (expand-begin body))
+                    ]
+                    [else-clause (body)
+                      (expand-begin body)
+                    ]
+                    [else (errorf 'cond-expansion "[ ERROR ]: Malformed cond-exp ~% --- cond-exp should contain only cond-clause or else-clause: %s" c)]
+                  )
+                  (cases clause (car clauses)
+                    [cond-clause (conditional body)
+                      (if-else-exp (syntax-expand conditional)
+                                   (expand-begin body)
+                                   (cond-expansion (cdr clauses)))
+                    ]
+                    [else (errorf 'cond-expansion "[ ERROR ]: Malformed cond-exp ~% --- cond-exp should contain only cond-clause or else-clause: %s" c)]
+                  )
+                )
+              )
+            )])
+          (cond-expansion clauses)
+        )
+
+
+
+
+  	  		;		(if (null? (cdr conditions))
+  	  		;			(if (equal? 'else (car conditions))
+  	  		;				(expand-begin (car bodies))
+  	  		;				(if-then-exp
+  	  		;					(syntax-expand (car conditions))
+  	  		;					(expand-begin (car bodies))
+  	  		;				)
+  	  		;			)
+  	  		;			(if-else-exp
+	  	  	;				(syntax-expand (car conditions))
+	  	  	;				(expand-begin (car bodies))
+	  	  	;				(cond-expansion (cdr conditions) (cdr bodies))
+	  	  	;			)
+  	  		;		)
+  	  		;	)
+  	  		;])
+  	  		;(cond-expansion conditions bodies)
+  	  	;)
   	  ]
       [let-exp (let-type name variables values body)
         (cond

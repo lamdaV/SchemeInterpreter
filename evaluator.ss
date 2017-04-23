@@ -66,7 +66,7 @@
             (eval-exp false-exp env)
           )
         ]
-        [cond-exp (conditionals bodies)
+        [cond-exp (clauses)
           (eval-exp (syntax-expand exp) env)
         ]
         [begin-exp (body)
