@@ -69,6 +69,9 @@
         [cond-exp (clauses)
           (eval-exp (syntax-expand exp) env)
         ]
+        [case-exp (key clauses)
+          (eval-exp (syntax-expand exp) env)
+        ]
         [begin-exp (body)
           (eval-exp (syntax-expand exp) env)
         ]
@@ -84,6 +87,12 @@
               (if name
                 (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name) ; TODO
                 (eval-bodies body (extend-env variables (eval-rands values env) env))
+              )
+            ]
+            [(equal? 'let* let-type)
+              (if name
+                (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let* unsupported: ~s" name) ; TODO
+                (eval-exp (syntax-expand exp) env)
               )
             ]
             [else

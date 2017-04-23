@@ -43,6 +43,22 @@
   )
 )
 
+(define case-clause?
+  (lambda (c)
+    (cases clause c
+      [case-clause (conditional body)
+        #t
+      ]
+      [else-clause (body)
+        #t
+      ]
+      [else
+        #f
+      ]
+    )
+  )
+)
+
 ; Expression datatype.
 (define-datatype expression expression?
   [var-exp (variable symbol?)]
@@ -102,8 +118,8 @@
     (conditionals (list-of expression?))
   ]
   [case-exp
-    (key expression?)
-    (clauses (list-of clause?))
+    (key list?)
+    (clauses (list-of case-clause?))
   ]
 )
 

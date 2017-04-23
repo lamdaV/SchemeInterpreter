@@ -219,9 +219,9 @@
                 (letrec ([parse-cond (lambda (x)
                                        (let ([identifier (car x)]
                                              [body (map parse-exp (cdr x))])
-                                         (if (equal? (car x) 'else)
-                                            (else-clause (map parse-exp (cdr x)))
-                                            (cond-clause (parse-exp (car x)) (map parse-exp (cdr x)))
+                                         (if (equal? identifier 'else)
+                                            (else-clause body)
+                                            (cond-clause (parse-exp identifier) body)
                                          )
                                        )
                                      )]
@@ -242,12 +242,18 @@
               [(< (length datum) 3)
                 (errorf 'parse-exp "[ ERROR ]: malformed case-exp ~% --- case expressions have an identifier, key, and one or more clauses: ~s" datum)
               ]
-              ;[(not (andmap clause? (cddr datum)))
-              ;  (errorf 'parse-exp "[ ERROR ]: malformed case-exp clause ~% --- clause is of the form ((object ...) expression1 expression2 ...): ~s" (cddr datum))
-              ;]
               [else
                 (let ([key (parse-exp (cadr datum))]
-                      [clauses (map parse-exp (cddr datum))])
+                      [clauses (map (lambda (x)
+                                      (let ([identifier (car x)] 
+                                            [body (map parse-exp (cdr x))])
+                                        (if (equal? 'else identifier)
+                                          (else-clause body)
+                                          (case-clause identifier body)
+                                        )
+                                      )
+                                    )
+                                    (cddr datum))])
                   (case-exp key clauses)
                 )
               ]
@@ -308,7 +314,22 @@
           (cons 'cond (map unparse-clause clauses))
         )
       ]
-      [case-exp (key clauses) #f] ; TODO
+      [case-exp (key clauses)
+        (letrec ([unparse-clause (lambda (x)
+                                   (cases clause x
+                                     [case-clause (keys body)
+                                       (cons keys
+                                             (map unparse-exp body))
+                                     ]
+                                     [else-clause (body)
+                                       (cons 'else (map unparse-exp body))
+                                     ]
+                                     [else (errorf 'unparse-clause "[ ERROR ]: Malformed cond-exp ~% --- cond-exp should contain only cond-clause or else-clause: %s" x)]
+                                   )
+                                 )])
+          (cons* 'case (unparse-exp key) (map unparse-clause clauses))
+        )
+      ] ; TODO
       [lambda-exp (required optional body)
         (let ([decode-body (map unparse-exp body)])
           (if (null? required) ; If the required arguments is an empty list, this is (lambda x ...) and not (lambda (x . y) ...)

@@ -74,29 +74,24 @@
             )])
           (cond-expansion clauses)
         )
-
-
-
-
-  	  		;		(if (null? (cdr conditions))
-  	  		;			(if (equal? 'else (car conditions))
-  	  		;				(expand-begin (car bodies))
-  	  		;				(if-then-exp
-  	  		;					(syntax-expand (car conditions))
-  	  		;					(expand-begin (car bodies))
-  	  		;				)
-  	  		;			)
-  	  		;			(if-else-exp
-	  	  	;				(syntax-expand (car conditions))
-	  	  	;				(expand-begin (car bodies))
-	  	  	;				(cond-expansion (cdr conditions) (cdr bodies))
-	  	  	;			)
-  	  		;		)
-  	  		;	)
-  	  		;])
-  	  		;(cond-expansion conditions bodies)
-  	  	;)
   	  ]
+      [case-exp (key clauses)
+        (let ([case-expansion
+            (lambda (c)
+              (cases clause c
+                [case-clause (keys body)
+                  (cond-clause (app-exp (var-exp 'member) (list key (lit-exp keys))) body)
+                ]
+                [else-clause (body)
+                  c
+                ]
+                [else (errorf 'cond-expansion "[ ERROR ]: Malformed case-exp ~% --- case-exp should contain only case-clause or else-clause: %s" c)]
+              )
+            )
+          ])
+          (syntax-expand (cond-exp (map case-expansion clauses)))
+        )
+      ]
       [let-exp (let-type name variables values body)
         (cond
           [(equal? let-type 'let*)

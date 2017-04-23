@@ -370,6 +370,19 @@
             (map (lambda (arg) (apply-proc proc arg)) align-args)
           )
         ]
+        [(member)
+          (cond 
+            [(< argsLength 2)
+              (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of member arguments ~% --- member expects at least 2 arguments: ~s in ~s" argsLength args)
+            ]
+            [(not (list? (2nd args)))
+              (errorf 'apply-prim-proc "[ ERROR ]: Malformed member argument ~% --- member expects the second argument to be a list: ~s in ~s" (2nd args) args)
+            ]
+            [else
+              (apply member args)
+            ]
+          )
+        ]
         [else
           (errorf 'apply-prim-proc "[ ERROR ]: Bad primitive procedure name ~% --- undefined primitive procedure: ~s" prim-proc)
         ]
