@@ -1,18 +1,21 @@
 const JSZip = require("jszip");
 const fs = require("fs");
+const path = require("path");
 
 const zip = new JSZip();
-
 const SCHEME_FILE_EXTENSIONS = [".ss", ".scm"];
 
-const projectFiles = ["main.ss", "apply-proc.ss", "chez-init.ss", "datatypes.ss", "env.ss", "evaluator.ss", "interpreter.ss", "parse.ss", "syntax-expand.ss"];
-const numberOfFiles = projectFiles.length;
-
-let readCounter = 0;
+const DIRECTORY = process.argv[2];
+if (process.argv[2]) {
+  console.log("[ INFO ] : source directory at ", DIRECTORY);
+} else {
+  console.log("[ ERROR ] : usage: node zip.js <source_directory>");
+  return;
+}
 
 function getProjectFiles() {
   return new Promise((resolve, reject) => {
-    fs.readdir(".", (error, files) => {
+    fs.readdir(DIRECTORY, (error, files) => {
       if (error) {
         return reject(error);
       } else {
@@ -32,7 +35,7 @@ function readToZip(files) {
 
   return new Promise((resolve, reject) => {
     files.forEach((file) => {
-      fs.readFile(file, (error, data) => {
+      fs.readFile(path.resolve(DIRECTORY, file), (error, data) => {
         if (error) {
           return reject(error);
         } else {
