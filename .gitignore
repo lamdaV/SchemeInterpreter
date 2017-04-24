@@ -7,3 +7,5 @@
 .#*.scm
 
 *.zip
+
+/node_modules/
