@@ -4,7 +4,8 @@ A Scheme Interprester built in Scheme to interpret Scheme.
 
 ## Authors
 
-David Lam Adam Finer
+David Lam<br/>
+Adam Finer
 
 ## Zipping Files
 
