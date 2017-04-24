@@ -1,0 +1,29 @@
+{
+  "name": "scheme-interpreter",
+  "version": "1.0.0",
+  "description": "A scheme interpreter written in scheme.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node zip.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lamdaV/SchemeInterpreter.git"
+  },
+  "keywords": [
+    "scheme"
+  ],
+  "author": "David Lam",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lamdaV/SchemeInterpreter/issues"
+  },
+  "homepage": "https://github.com/lamdaV/SchemeInterpreter#readme",
+  "dependencies": {
+    "jszip": "^3.1.3"
+  }
+}
