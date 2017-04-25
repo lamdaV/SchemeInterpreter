@@ -19,32 +19,26 @@
 
 (define print-info
   (lambda (selector)
-    (display "[ INFO ]: test ")
-    (display selector)
-    (display " successfully loaded.")
-    (newline)
+    (display (string-append "[ INFO ]: test " (number->string selector) " successfully loaded\n"))
   )
 )
 
+(define print-error
+  (lambda (selector)
+    (display (string-append "[ ERROR ]: Unsupported selector\n --- selector " (number->string selector) " is not supported\n"))
+  )
+)
+
+(define SUPPORTED_SELECTOR (list 13 14))
+
 (define load-test
   (lambda (selector)
-    (case selector
-      [(13)
-       (load "test/13-test.ss")
-       (print-info selector)
-      ]
-      [(14)
-        (load "test/14-test.ss")
+    (if (ormap (lambda (x) (equal? selector x)) SUPPORTED_SELECTOR)
+      (begin
+        (load (string-append "../test/" (number->string selector) "-test.ss"))
         (print-info selector)
-      ]
-      [else
-        (display "[ ERROR ]: Unsupported test selector")
-        (newline)
-        (display " --- selector ")
-        (display selector)
-        (display " is not defined")
-        (newline)
-      ]
+      )
+      (print-error selector)
     )
   )
 )
