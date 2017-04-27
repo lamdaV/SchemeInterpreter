@@ -66,15 +66,6 @@
             (eval-exp false-exp env)
           )
         ]
-        [cond-exp (clauses)
-          (eval-exp (syntax-expand exp) env)
-        ]
-        [case-exp (key clauses)
-          (eval-exp (syntax-expand exp) env)
-        ]
-        [begin-exp (body)
-          (eval-exp (syntax-expand exp) env)
-        ]
         [app-exp (operator arguments)
           (let ([proc-value (eval-exp operator env)]
                 [args (eval-rands arguments env)])
@@ -89,10 +80,10 @@
                 (eval-bodies body (extend-env variables (eval-rands values env) env))
               )
             ]
-            [(equal? 'let* let-type)
+            [(equal? 'letrec let-type)
               (if name
-                (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let* unsupported: ~s" name)
-                (eval-exp (syntax-expand exp) env)
+                (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name)
+                ; TODO
               )
             ]
             [else
@@ -111,16 +102,15 @@
           (closure variables body env)
         ]
         [set!-exp (variable value)
-          (errorf 'eval-exp "[ ERROR ]: Unsupported operation ~% --- operation: ~s" (unparse-exp exp)) ; TODO
-        ]
-        [and-exp (conditionals)
-          (eval-exp (syntax-expand exp) env)
-        ]
-        [or-exp (conditionals)
-          (eval-exp (syntax-expand exp) env)
+          (mutate-env variable (eval-exp value env) env)
         ]
         [while-exp (test body)
-          (eval-exp (syntax-expand exp) env)
+          (if (eval-exp test env)
+            (begin
+              (eval-bodies body env)
+              (eval-exp exp env)
+            )
+          )
         ]
         [else
           (errorf 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" (unparse-exp exp))

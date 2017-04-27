@@ -7,16 +7,45 @@
 
 (define extend-env
   (lambda (syms vals env)
-    (extended-env-record syms vals env) ; TODO SPLIT syms with vals for improper list case.
+    (extended-env-record syms vals env)
   )
 )
 
+(define mutate-env
+  (lambda (sym val env)
+    (cases environment env
+      [empty-env-record ()
+        (set! global-env (extend-env (list sym) (list val) global-env))
+      ]
+      [extended-env-record (syms vals env)
+        (let ([index (list-find-position sym syms)])
+          (if index
+            (set-at-index! index val vals)
+            (mutate-env sym val env)
+          )
+        )
+      ]
+    )
+  )  
+)
+
+; Returns the index of the sym in los. If it is not is los, returns #f
 (define list-find-position
   (lambda (sym los)
     (list-index (lambda (xsym) (eqv? sym xsym)) los)
   )
 )
 
+(define set-at-index!
+  (lambda (index val ls)
+    (if (zero? index)
+      (set-car! ls val)
+      (set-at-index! (- index 1) val (cdr ls))
+    )
+  )
+)
+
+; Returns the index where pred is true in ls
 (define list-index
   (lambda (pred ls)
     (cond

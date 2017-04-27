@@ -7,14 +7,16 @@
   				(letrec
 	  				([or-expansion
 	  					(lambda (conds)
-	  						(if (null? (cdr conds))
-	  							(syntax-expand (car conds))
-	  							(if-else-exp
-		  							(syntax-expand (car conds))
-		  							(car conds)
-		  							(or-exp (cdr conds))
-		  						)
-	  						)
+                (let ([new-car (syntax-expand (car conds))])
+                  (if (null? (cdr conds))
+                    new-car
+                    (if-else-exp
+                      new-car
+                      new-car
+                      (or-expansion (cdr conds))
+                    )
+                  )
+                )	
 	  					)
 	  				])
 	  				(or-expansion conditionals)
@@ -27,14 +29,16 @@
   				(letrec
 	  				([and-expansion
 	  					(lambda (conds)
-	  						(if (null? (cdr conds))
-	  							(syntax-expand (car conds))
-	  							(if-else-exp
-		  							(syntax-expand (car conds))
-		  							(and-exp (cdr conds))
-		  							(lit-exp #f)
-		  						)
-	  						)
+                (let ([new-car (syntax-expand (car conds))])
+                  (if (null? (cdr conds))
+                    new-car
+                    (if-else-exp
+                      new-car
+                      (and-expansion (cdr conds))
+                      (lit-exp #f)
+                    )
+                  )
+                )
 	  					)
 	  				])
 	  				(and-expansion conditionals)
@@ -44,7 +48,7 @@
   	  [begin-exp (body)
   	  	(if (null? body)
   	  		(void-exp)
-  	  		(app-exp (lambda-exact-exp '() body) '())
+  	  		(app-exp (lambda-exact-exp '() (map syntax-expand body)) '())
   	  	)
   	  ]
   	  [cond-exp (clauses)
@@ -104,13 +108,37 @@
               (let-exp 'let name (list (car variables)) (list (car values)) (let*-expansion (cdr variables) (cdr values)))
             )
           ]
+          [(and (equal? let-type 'let) (not name))
+            (let-exp let-type name variables (map syntax-expand values) (map syntax-expand body))
+          ]
+          [name
+            (app-exp (let-exp 'letrec #f (list name) (lambda-exact-exp variables body)) values)
+          ]
           [else ; Other let-types
             exp
           ]
         )
       ]
+      [app-exp (operator arguments)
+        (app-exp (syntax-expand operator) (map syntax-expand arguments))
+      ]
+      [lambda-exact-exp (variable body)
+        (lambda-exact-exp variable (map syntax-expand body))
+      ]
+      [lambda-exp (required optional body)
+        (lambda-exp required optional (map syntax-expand body))
+      ]
+      [if-then-exp (conditional true-exp)
+        (if-then-exp (syntax-expand conditional) (syntax-expand true-exp))
+      ]
+      [if-else-exp (conditional true-exp false-exp)
+        (if-else-exp (syntax-expand conditional) (syntax-expand true-exp) (syntax-expand false-exp))
+      ]
+      [set!-exp (variable value)
+        (set!-exp variable (syntax-expand value))
+      ]
       [while-exp (test body)
-        (if-then-exp (syntax-expand test) (expand-begin (append body (list exp))))
+        (while-exp (syntax-expand test) (map syntax-expand body))
       ]
   	  [else exp]
   	)
