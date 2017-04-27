@@ -82,8 +82,8 @@
             ]
             [(equal? 'letrec let-type)
               (if name
-                (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name)
-                ; TODO
+                (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- named letrec is unsupported: ~s" (unparse-exp exp))
+                (let ())
               )
             ]
             [else
