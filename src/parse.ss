@@ -191,9 +191,9 @@
               [(not (equal? 3 (length datum)))
                 (errorf 'parse-exp "[ ERROR ]: malformed set! ~% --- set! statements must include an identifier, variable symbol, and value: ~s" datum)
               ]
-              [(not (symbol? (caddr datum)))
-                (errorf 'parse-exp "[ ERROR ]: malformed set! ~% --- set! variable must be a symbol: ~s in ~s" (caddr datum) datum)
-              ]
+              ;[(not (symbol? (caddr datum)))
+              ;  (errorf 'parse-exp "[ ERROR ]: malformed set! ~% --- set! variable must be a symbol: ~s in ~s" (caddr datum) datum)
+              ;]
               [else
                   (let ([variable (cadr datum)]
                         [value (caddr datum)])
