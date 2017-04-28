@@ -83,7 +83,12 @@
             [(equal? 'letrec let-type)
               (if name
                 (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- named letrec is unsupported: ~s" (unparse-exp exp))
-                (let ())
+                (let* ([temp-values (make-list (length values) #f)]
+                       [temp-env (extend-env variables temp-values env)])
+                  ; for each variables, mutate env
+                  (for-each (lambda (variable value) (mutate-env variable (eval-exp value temp-env) temp-env)) variables values)
+                  (eval-bodies body temp-env)
+                )
               )
             ]
             [else

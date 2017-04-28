@@ -16,7 +16,7 @@
                       (or-expansion (cdr conds))
                     )
                   )
-                )	
+                )
 	  					)
 	  				])
 	  				(or-expansion conditionals)
@@ -112,7 +112,19 @@
             (let-exp let-type name variables (map syntax-expand values) (map syntax-expand body))
           ]
           [name
-            (app-exp (let-exp 'letrec #f (list name) (lambda-exact-exp variables body)) values)
+            (let ([letrec-variables (list name)]
+                  [letrec-values (list (lambda-exact-exp variables (map syntax-expand body)))]
+                  [letrec-body (list (var-exp name))])
+              (app-exp
+                (let-exp 'letrec #f letrec-variables letrec-values letrec-body) ; operator-exp
+                (map syntax-expand values)) ; list args-exp
+            )
+          ]
+          [(equal? let-type 'letrec)
+            (let ([expanded-values (map syntax-expand values)]
+                  [expanded-body (map syntax-expand body)])
+              (let-exp 'letrec #f variables expanded-values expanded-body)
+            )
           ]
           [else ; Other let-types
             exp
