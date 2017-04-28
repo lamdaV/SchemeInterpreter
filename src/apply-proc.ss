@@ -101,7 +101,7 @@
         [(cdr)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdr expects one argument: ~s in ~s" arg-length args)]
-            [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cdr arguments ~% --- cdr expects a list argument: ~s in ~s" (1st args) args)]
+            [(not (pair? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cdr arguments ~% --- cdr expects a list argument: ~s in ~s" (1st args) args)]
             [else (cdr (1st args))]
           )
         ]
@@ -198,7 +198,7 @@
         [(assq)
           (cond
             [(not (equal? 2 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- assq expects two arguments: ~s in ~s" arg-length args)]
-            [(not ((list-of list?) (2nd args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed assq arguments ~% --- assq expects its second argument to be a list of lists: ~s in ~s" (2nd args) args)]
+            [(not ((list-of pair?) (2nd args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed assq arguments ~% --- assq expects its second argument to be a list of lists: ~s in ~s" (2nd args) args)]
             [else (assq (1st args) (2nd args))]
           )
         ]

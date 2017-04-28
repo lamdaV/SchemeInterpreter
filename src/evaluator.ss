@@ -117,6 +117,9 @@
             )
           )
         ]
+        [define-exp (identifier value)
+          (mutate-global-env! identifier (eval-exp value env))
+        ]
         [else
           (errorf 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" (unparse-exp exp))
         ]

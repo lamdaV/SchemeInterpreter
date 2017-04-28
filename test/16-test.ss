@@ -287,6 +287,8 @@
   (test-additional)
   (display 'subst-leftmost) 
   (test-subst-leftmost)
+  (display 'set!)
+  (test-set!)
 )
 
 (define r run-all)

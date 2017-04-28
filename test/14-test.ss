@@ -365,7 +365,10 @@
   (test-syntactic-expansion)
   (display 'one-armed-if)
   (test-one-armed-if)
-
+  (display 'bind-args)
+  (test-bind-args)
+  (display 'pair-of-symbols)
+  (test-pair-of-symbols?)
 )
 
 (define r run-all)

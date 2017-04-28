@@ -117,6 +117,10 @@
     (test expression?)
     (body (list-of expression?))
   ]
+  [define-exp
+    (identifier symbol?)
+    (value expression?)
+  ]
 )
 
 ;; environment type definitions

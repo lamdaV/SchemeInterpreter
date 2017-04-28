@@ -10,10 +10,18 @@
                 (let ([new-car (syntax-expand (car conds))])
                   (if (null? (cdr conds))
                     new-car
-                    (if-else-exp
-                      new-car
-                      new-car
-                      (or-expansion (cdr conds))
+                    (let-exp
+                      'let
+                      #f
+                      (list 'test-cond)
+                      (list new-car)
+                      (list 
+                        (if-else-exp
+                          (var-exp 'test-cond)
+                          (var-exp 'test-cond)
+                          (or-expansion (cdr conds))
+                        )
+                      )
                     )
                   )
                 )
@@ -151,6 +159,9 @@
       ]
       [while-exp (test body)
         (while-exp (syntax-expand test) (map syntax-expand body))
+      ]
+      [define-exp (identifier value)
+        (define-exp identifier (syntax-expand value))
       ]
   	  [else exp]
   	)

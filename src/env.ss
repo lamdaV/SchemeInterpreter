@@ -17,7 +17,7 @@
   (lambda (sym val env)
     (cases environment env
       [empty-env-record ()
-        (set! global-env (extend-env (list sym) (list val) global-env))
+        (mutate-global-env! sym val)
       ]
       [extended-env-record (syms vals env)
         (let ([index (list-find-position sym syms)])
@@ -83,13 +83,39 @@
   )
 )
 
-(define init-env         ; for now, our initial global environment only contains
-  (extend-env            ; procedure names.  Recall that an environment associates
-     *prim-proc-names*   ;  a value (not an expression) with an identifier.
-     (map prim-proc
-          *prim-proc-names*)
-     (empty-env)
+(define make-init-env         ; for now, our initial global environment only contains
+  (lambda () 
+    (extend-env            ; procedure names.  Recall that an environment associates
+       *prim-proc-names*   ;  a value (not an expression) with an identifier.
+       (map prim-proc
+            *prim-proc-names*)
+       (empty-env)
+    )   
   )
 )
 
-(define global-env init-env)
+(define reset-global-env
+  (lambda ()
+    (set! global-env (make-init-env))
+  )
+)
+
+(define global-env (make-init-env))
+
+(define mutate-global-env!
+  (lambda (sym val)
+    (cases environment global-env
+      [extended-env-record (syms vals env)
+        (let ([index (list-find-position sym syms)])
+          (if index
+            (set-at-index! index val vals)
+            (set! global-env (extended-env-record (cons sym syms) (cons val vals) env)) ; env is the init-env's empty-env
+          )
+        )
+      ]
+      [else
+        (errorf 'mutate-global-env! "[ ERROR ]: Incompatible argument ~% --- global-env must be an environment of type enxtended-env-record but is an empty-env-record")
+      ]
+    )
+  )
+)

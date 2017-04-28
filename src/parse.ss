@@ -272,6 +272,19 @@
               ]
             )
           ]
+          [(eqv? (car datum) 'define)
+            (cond 
+              [(not (equal? (length datum) 3))
+                (errorf 'parse-exp "[ ERROR ]: malformed define-exp ~% --- define expressions have an identifier and value: ~s" datum)
+              ]
+              [(not (symbol? (2nd datum)))
+                (errorf 'parse-exp "[ ERROR ]: malformed define-exp ~% --- first argument should be a symbol: ~s in ~s" (2nd datum) datum)
+              ]
+              [else
+                (define-exp (2nd datum) (parse-exp (3rd datum)))
+              ]
+            )
+          ]
           [else ; (app-exp ...)
             (if (improper? datum)
               (errorf 'parse-exp "[ ERROR ]: malformed app-exp ~% --- improper list ~s" datum)
@@ -407,6 +420,11 @@
         (let ([decode-test (unparse-exp test)]
               [decode-body (map unparse-exp body)])
           (cons* 'while decode-test decode-body)
+        )
+      ]
+      [define-exp (identifier value)
+        (let ([decode-value (unparse-exp value)])
+          (list 'define identifier decode-value)
         )
       ]
     )
