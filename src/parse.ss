@@ -273,7 +273,7 @@
             )
           ]
           [(eqv? (car datum) 'define)
-            (cond 
+            (cond
               [(not (equal? (length datum) 3))
                 (errorf 'parse-exp "[ ERROR ]: malformed define-exp ~% --- define expressions have an identifier and value: ~s" datum)
               ]
@@ -283,6 +283,38 @@
               [else
                 (define-exp (2nd datum) (parse-exp (3rd datum)))
               ]
+            )
+          ]
+          [(eqv? (car datum) 'for) ; (for ((init ...) : test : update ...) body ...)
+            (letrec ([colon-count (trace-lambda colon (inits count)
+                                    (cond
+                                      [(null? inits) count]
+                                      [(equal? (car inits) ':) (colon-count (cdr inits) (add1 count))]
+                                      [else (colon-count (cdr inits) count)]
+                                    ))])
+              (cond
+                [(< (length datum) 2) ; most basic case (for (...))
+                  (errorf 'parse-exp "[ ERROR ]: malformed for-exp ~% --- for expressions have an identifier, list of initializers, zero or more bodies: ~s" datum)
+                ]
+                [(not (list? (cadr datum))) ; (init ...)
+                  (errorf 'parse-exp "[ ERROR ]: malformed for-exp ~% --- for expressions initializers must be a list: ~s in ~s" (caadr datum) datum)
+                ]
+                [(not (equal? (colon-count (cadr datum) 0) 2))
+                  (errorf 'parse-exp "[ ERROR ]: malformed for-exp ~% --- for expressions initializers must contain exactly two colons ((init ...) : test : update ...): ~s" (cadr datum))
+                ]
+                [(not (and (equal? ': (cadr (cadr datum))) (equal? ': (cadddr (cadr datum)))))
+                  (errorf 'parse-exp "[ ERROR ]: malformed for-exp ~% --- for expressions must have exactly one test ((init ...) : test : update ...): ~s" datum)
+                ]
+                [else
+                  (let* ([checks (cadr datum)] ; ((init ...) : test : update ...)
+                         [initializers (map parse-exp (car checks))] ; mapping to this (i1 i2 i3 ...)
+                         [test (parse-exp (caddr checks))]
+                         [updates (map parse-exp (cddddr checks))]
+                         [body (map parse-exp (cddr datum))])
+                    (for-exp initializers test updates body)
+                  )
+                ]
+              )
             )
           ]
           [else ; (app-exp ...)
@@ -386,7 +418,7 @@
       ]
       [if-then-exp (conditional true-exp)
         (let ([decode-conditional (unparse-exp conditional)]
-              [decode-true-exp (unparse-exp conditional)])
+              [decode-true-exp (unparse-exp true-exp)])
           (list 'if decode-conditional decode-true-exp)
         )
       ]
@@ -425,6 +457,14 @@
       [define-exp (identifier value)
         (let ([decode-value (unparse-exp value)])
           (list 'define identifier decode-value)
+        )
+      ]
+      [for-exp (initializers test update body)
+        (let ([decode-inits (map unparse-exp initializers)]
+              [decode-test (unparse-exp test)]
+              [decode-update (map unparse-exp update)]
+              [decode-body (map unparse-exp body)])
+          (cons* 'for (cons* decode-inits ': decode-test ': decode-update) decode-body)
         )
       ]
     )
