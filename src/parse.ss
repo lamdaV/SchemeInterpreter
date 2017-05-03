@@ -286,7 +286,7 @@
             )
           ]
           [(eqv? (car datum) 'for) ; (for ((init ...) : test : update ...) body ...)
-            (letrec ([colon-count (trace-lambda colon (inits count)
+            (letrec ([colon-count (lambda (inits count)
                                     (cond
                                       [(null? inits) count]
                                       [(equal? (car inits) ':) (colon-count (cdr inits) (add1 count))]
