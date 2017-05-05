@@ -9,7 +9,33 @@
 
 (define extend-env
   (lambda (syms vals env)
-    (extended-env-record syms vals env)
+    (extended-env-record syms (list->vector (map box vals)) env)
+  )
+)
+
+(define apply-proc-if-exists
+  (lambda (sym syms exist-proc nonexist-proc)
+    (let ([index (list-find-position sym syms)])
+      (if index
+        (exist-proc index)
+        (nonexist-proc)
+      )
+    )
+  )
+)
+
+(define mutate-global-env!
+  (lambda (sym val)
+    (cases environment global-env
+      [extended-env-record (syms vals env)
+        (apply-proc-if-exists sym syms
+          (lambda (index) (vector-set! vals index (box val)))
+          (lambda () (set! global-env (extended-env-record (cons sym syms) (vector-cons (box val) vals) (empty-env)))))
+      ]
+      [else
+        (errorf 'mutate-global-env! "[ ERROR ]: Incompatible argument ~% --- global-env must be an environment of type enxtended-env-record but is an empty-env-record")
+      ]
+    )
   )
 )
 
@@ -19,13 +45,10 @@
       [empty-env-record ()
         (mutate-global-env! sym val)
       ]
-      [extended-env-record (syms vals env)
-        (let ([index (list-find-position sym syms)])
-          (if index
-            (set-at-index! index val vals)
-            (mutate-env sym val env)
-          )
-        )
+      [extended-env-record (syms vals outer-env)
+        (apply-proc-if-exists sym syms
+          (lambda (index) (vector-set! vals index (box val)))
+          (lambda () (mutate-env sym val outer-env)))
       ]
     )
   )
@@ -65,6 +88,7 @@
   )
 )
 
+; Applies the succeed callback if symbol is found in the environment (local + global)
 (define apply-env
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
     (cases environment env
@@ -72,9 +96,9 @@
         (fail)
       ]
       [extended-env-record (syms vals env)
-	      (let ((pos (list-find-position sym syms)))
+	      (let ([pos (list-find-position sym syms)])
       	  (if (number? pos)
-	            (succeed (list-ref vals pos))
+	            (succeed (unbox (vector-ref vals pos)))
 	            (apply-env env sym succeed fail)
           )
         )
@@ -83,39 +107,32 @@
   )
 )
 
+; Constructs an initial environment populated with basic procedures.
 (define make-init-env         ; for now, our initial global environment only contains
-  (lambda () 
+  (lambda ()
     (extend-env            ; procedure names.  Recall that an environment associates
        *prim-proc-names*   ;  a value (not an expression) with an identifier.
        (map prim-proc
             *prim-proc-names*)
        (empty-env)
-    )   
+    )
   )
 )
 
+; Restore the global-env to the initial environment.
 (define reset-global-env
   (lambda ()
     (set! global-env (make-init-env))
   )
 )
 
+; Defines a global-env.
 (define global-env (make-init-env))
 
-(define mutate-global-env!
-  (lambda (sym val)
-    (cases environment global-env
-      [extended-env-record (syms vals env)
-        (let ([index (list-find-position sym syms)])
-          (if index
-            (set-at-index! index val vals)
-            (set! global-env (extended-env-record (cons sym syms) (cons val vals) env)) ; env is the init-env's empty-env
-          )
-        )
-      ]
-      [else
-        (errorf 'mutate-global-env! "[ ERROR ]: Incompatible argument ~% --- global-env must be an environment of type enxtended-env-record but is an empty-env-record")
-      ]
+(define vector-cons
+  (lambda (val vec)
+    (let ([vec-list (vector->list vec)])
+      (list->vector (cons val vec-list))
     )
   )
 )

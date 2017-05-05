@@ -138,7 +138,7 @@
   [empty-env-record]
   [extended-env-record
     (syms (list-of symbol?))
-    (vals (list-of scheme-value?))
+    (vals (vector-of box?))
     (env environment?)
   ]
 )
@@ -167,4 +167,12 @@
     (bodies (list-of expression?))
     (env environment?)
   ]
+)
+
+(define vector-of
+  (lambda (pred)
+    (lambda (x)
+      (and (vector? x) ((list-of pred) (vector->list x)))
+    )
+  )
 )
