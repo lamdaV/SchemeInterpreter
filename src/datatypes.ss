@@ -1,18 +1,4 @@
-;; Parsed expression datatypes
-
-(define clause? ; ((objs ...) e1 e2 ...)
-  (lambda (x)
-    (let ([length (length x)])
-      (cond
-        [(< length 2) #f]
-        [(not (list? (car x))) #f]
-        [(not (andmap expression? (cdr x))) #f]
-        [else #t]
-      )
-    )
-  )
-)
-
+; Clause datatype.
 (define-datatype clause clause?
   [cond-clause
     (conditonal expression?)
@@ -134,6 +120,14 @@
   (lambda (x) #t)
 )
 
+(define vector-of
+  (lambda (pred)
+    (lambda (x)
+      (and (vector? x) ((list-of pred) (vector->list x)))
+    )
+  )
+)
+
 (define-datatype environment environment?
   [empty-env-record]
   [extended-env-record
@@ -157,7 +151,6 @@
 
 ; datatype for procedures.  At first there is only one
 ; kind of procedure, but more kinds will be added later.
-
 (define-datatype proc-val proc-val?
   [prim-proc
    (name symbol?)
@@ -169,10 +162,8 @@
   ]
 )
 
-(define vector-of
-  (lambda (pred)
-    (lambda (x)
-      (and (vector? x) ((list-of pred) (vector->list x)))
-    )
-  )
+(define-datatype reference reference?
+  [lambda-ref
+    (sym symbol?)
+  ]
 )
