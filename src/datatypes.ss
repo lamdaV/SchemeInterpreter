@@ -121,6 +121,12 @@
     (identifier symbol?)
     (value expression?)
   ]
+  [for-exp
+    (initializers (list-of expression?)) ; may be empty
+    (test expression?) ; must exist
+    (update (list-of expression?)) ; may be empty
+    (body (list-of expression?))
+  ]
 )
 
 ;; environment type definitions

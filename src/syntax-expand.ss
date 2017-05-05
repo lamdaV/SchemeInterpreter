@@ -15,7 +15,7 @@
                       #f
                       (list 'test-cond)
                       (list new-car)
-                      (list 
+                      (list
                         (if-else-exp
                           (var-exp 'test-cond)
                           (var-exp 'test-cond)
@@ -162,6 +162,22 @@
       ]
       [define-exp (identifier value)
         (define-exp identifier (syntax-expand value))
+      ]
+      [for-exp (initializers test update body)
+        (let* ([expand-inits (map syntax-expand initializers)]
+               [expand-test (syntax-expand test)]
+               [expand-update (map syntax-expand update)]
+               [expand-body (map syntax-expand body)]
+
+               ; Construct the body of the begin.
+               [for-loop-var (var-exp 'for-loop)]
+               [for-loop-app (app-exp for-loop-var '())]
+               [if-begin (begin-exp (append expand-body expand-update (list for-loop-app)))]
+               [if-loop (if-then-exp expand-test if-begin)]
+               [let-loop (let-exp 'let 'for-loop '() '() (list if-loop))]
+               [begin-body (append expand-inits (list let-loop))])
+          (expand-begin begin-body)
+        )
       ]
   	  [else exp]
   	)
