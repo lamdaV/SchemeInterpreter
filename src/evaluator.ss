@@ -25,10 +25,7 @@
 
 (define top-level-eval
   (lambda (form)
-    (unbox-boxed
-    (eval-exp form
-      (empty-env)
-    ))
+    (unbox-if-not (eval-exp form (empty-env)))
   )
 )
 
@@ -56,19 +53,19 @@
         ]
         [void-exp () (void)]
         [if-then-exp (conditional true-exp)
-          (if (unbox-boxed (eval-exp conditional env))
-            (unbox-boxed (eval-exp true-exp env))
+          (if (unbox-if-not (eval-exp conditional env))
+            (unbox-if-not (eval-exp true-exp env))
             (void)
           )
         ]
         [if-else-exp (conditional true-exp false-exp)
-          (if (unbox-boxed (eval-exp conditional env))
-            (unbox-boxed (eval-exp true-exp env))
-            (unbox-boxed (eval-exp false-exp env))
+          (if (unbox-if-not (eval-exp conditional env))
+            (unbox-if-not (eval-exp true-exp env))
+            (unbox-if-not (eval-exp false-exp env))
           )
         ]
         [app-exp (operator arguments)
-          (let ([proc-value (unbox-boxed (eval-exp operator env))]
+          (let ([proc-value (unbox-if-not (eval-exp operator env))]
                 [args (eval-rands arguments env)])
             (apply-proc proc-value args)
           )
@@ -78,7 +75,7 @@
             [(equal? 'let let-type)
               (if name
                 (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name) ; TODO
-                (eval-bodies body (extend-env variables (map unbox-boxed (eval-rands values env)) env))
+                (eval-bodies body (extend-env variables (map unbox-if-not (eval-rands values env)) env))
               )
             ]
             [(equal? 'letrec let-type)
@@ -87,7 +84,7 @@
                 (let* ([temp-values (make-list (length values) #f)]
                        [temp-env (extend-env variables temp-values env)])
                   ; for each variables, mutate env
-                  (for-each (lambda (position value) (mutate-env (bound 0 position) (unbox-boxed (eval-exp value temp-env)) temp-env)) (iota (length variables)) values)
+                  (for-each (lambda (position value) (mutate-env (bound 0 position) (unbox-if-not (eval-exp value temp-env)) temp-env)) (iota (length variables)) values)
                   (eval-bodies body temp-env)
                 )
               )
@@ -99,18 +96,18 @@
           )
         ]
         [lambda-exp (required optional body)
-          (if (null? required)
-            (closure (cons required optional) body env)
-            (closure (append required optional) body env)
-          )
+          ;(if (null? required)
+            ;(closure (append required optional) body env)
+            (closure (append required (list optional)) body env)
+          ;)
         ]
         [lambda-exact-exp (variables body)
           (closure variables body env)
         ]
         [set!-exp (variable value)
           (if (box? variable)
-            (set-box! variable (unbox-boxed (eval-exp value env)))
-            (mutate-env variable (unbox-boxed (eval-exp value env)) env)
+            (set-box! variable (unbox-if-not (eval-exp value env)))
+            (mutate-env variable (unbox-if-not (eval-exp value env)) env)
           )
         ]
         [define-exp (identifier value)

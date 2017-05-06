@@ -45,7 +45,7 @@
               (let ([variables (cadr datum)]
                     [body (map parse-exp (cddr datum))])
                 (cond
-                  [(symbol? variables) (lambda-exp '() (non-reference variables) body)] ; optional/many argument lambda
+                  [(symbol? variables) (lambda-exp '() (variable-parameter variables) body)] ; optional/many argument lambda
                   [(improper? variables) ; required + optional/many argument lambda
                     (letrec (
                       [parse-improper-list ; (a b . c) --> ((a b) (c)) where the car is the "proper list" and the cadr is the "improper list"
@@ -63,11 +63,11 @@
                       (let* ([parse-variables (parse-improper-list variables '() '())]
                              [required (car parse-variables)]
                              [optional (caadr parse-variables)])
-                        (cond 
-                          [(not (symbol? optional)) 
+                        (cond
+                          [(not (symbol? optional))
                             (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- optional variable must be a symbol: ~s in ~s" variables datum)]
                         )
-                        (lambda-exp (parse-lambda-variables required) (non-reference optional) body)
+                        (lambda-exp (parse-lambda-variables required) (variable-parameter optional) body)
                       )
                     )
                   ]
@@ -361,6 +361,9 @@
       ]
       [reference (sym)
         (list 'ref sym)
+      ]
+      [variable-parameter (sym)
+        sym
       ]
       [else
         (errorf 'unparse-parameter "[ ERROR ]: unexpected parameter type ~% --- parameter must be either a reference or non-reference type: ~s" param)

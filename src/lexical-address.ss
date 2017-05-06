@@ -31,6 +31,9 @@
 			[reference (sym)
 				sym
 			]
+			[variable-parameter (sym)
+				sym
+			]
 			[else
 				(errorf 'unreference-parameter "[ ERROR ]: unexpected parameter type ~% --- parameter must be either a reference or non-reference type: ~s" param)
 			]

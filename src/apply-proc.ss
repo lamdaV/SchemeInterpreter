@@ -459,7 +459,7 @@
   (lambda (x)
     (cond
       [(null? x) x]
-      [(null? (car x)) (list (cdr x))]
+      [(null? (car x)) (cdr x)]
       [else (letrec
               ([loop
                 (lambda (x acc)
@@ -481,39 +481,50 @@
 (define bind-args
   (lambda (variables arguments accumulator)
     (cond
-      [(null? variables) 
+      [(null? variables)
         (reverse accumulator)
       ]
       [(null? (car variables)) ; single variable lambda case
-        (reverse (cons (map unbox-boxed arguments) accumulator))
+        (reverse (cons (map unbox-if-not arguments) accumulator))
       ]
-      [(symbol? (cdr variables)) ; case for improper list since final arg cannot be a reference
-        (let ([unbox-cdr (map unbox-boxed (cdr arguments))])
-          (cases parameter (car variables)
-            [reference (sym)
-              (reverse (cons* unbox-cdr (car arguments) accumulator))
-            ]
-            [else
-              (reverse (cons* unbox-cdr (unbox-boxed (car arguments)) accumulator))
-            ]
-          )
-        )        
-      ]
+      ;[(and (null? (cdr variables)) (not (null? (cdr arguments))))
+      ;  (let ([unbox-args (map unbox-if-not arguments)])
+      ;    (pretty-print unbox-args)
+      ;    (reverse (cons unbox-args accumulator))
+      ;  )
+      ;]
+      ;[(symbol? (cdr variables)) ; case for improper list since final arg cannot be a reference
+      ;  (let ([unbox-cdr (map unbox-if-not (cdr arguments))])
+      ;    (cases parameter (car variables)
+      ;      [reference (sym)
+      ;        (reverse (cons* unbox-cdr (car arguments) accumulator))
+      ;      ]
+      ;      [else
+      ;        (reverse (cons* unbox-cdr (unbox-if-not (car arguments)) accumulator))
+      ;      ]
+      ;    )
+      ;  )
+      ;]
       [else
         (cases parameter (car variables)
           [reference (sym)
             (bind-args (cdr variables) (cdr arguments) (cons (car arguments) accumulator))
           ]
-          [else
-            (bind-args (cdr variables) (cdr arguments) (cons (unbox-boxed (car arguments)) accumulator))
+          [variable-parameter (sym)
+            (let ([unbox-args (map unbox-if-not arguments)])
+              (reverse (cons unbox-args accumulator))
+            )
           ]
-        ) 
+          [else
+            (bind-args (cdr variables) (cdr arguments) (cons (unbox-if-not (car arguments)) accumulator))
+          ]
+        )
       ]
     )
   )
 )
 
-(define unbox-boxed
+(define unbox-if-not
   (lambda (arg)
     (if (box? arg)
       (unbox arg)
@@ -527,13 +538,13 @@
 ;  User-defined procedures will be added later.
 (define apply-proc
   (lambda (proc-value args)
-    (cases proc-val (unbox-boxed proc-value)
+    (cases proc-val (unbox-if-not proc-value)
       [prim-proc (operator)
-        (apply-prim-proc operator (map unbox-boxed args))
+        (apply-prim-proc operator (map unbox-if-not args))
       ]
       [closure (variables bodies env)
         (eval-bodies bodies
-          (extend-env (map unreference-parameter (pair->list variables)) (bind-args variables args '()) env)
+          (extend-env (map unreference-parameter variables) (bind-args variables args '()) env)
         )
       ]
 			; You will add other cases

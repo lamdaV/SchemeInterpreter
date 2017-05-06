@@ -95,11 +95,13 @@
 	     (eval-one-exp '((lambda (x y . z)
 			       (cons (+ x y) (cdr z)))
 			     5 4 3 2 1))
-	     (eval-one-exp ' ((lambda (x y . z)
-				(if (> x y)
-				    (car z)
-				    (cdr z))
-				(cadr z)) 5 4 'three 'two 'one))
+	     (eval-one-exp '((lambda (x y . z)
+				                 (if (> x y)
+				                   (car z)
+				                   (cdr z)
+                         )
+				                 (cadr z)
+                      ) 5 4 'three 'two 'one))
 	     )])
       (display-results correct answers equal?)))
 
@@ -131,7 +133,7 @@
     )]
      [answers
        (list
-          (bind-args '(y . x) '(1) '()) 
+          (bind-args '(y . x) '(1) '())
           (bind-args '(x) '(2) '())
           (bind-args '(x y z w) '(1 2 3 4) '())
           (bind-args '(() . x) '() '())
@@ -156,7 +158,7 @@
     )]
      [answers
        (list
-          (pair-of-symbols? '(y . x)) 
+          (pair-of-symbols? '(y . x))
           (pair-of-symbols? '(x))
           (pair-of-symbols? '(x y z w))
           (pair-of-symbols? '(() . x))
@@ -365,10 +367,10 @@
   (test-syntactic-expansion)
   (display 'one-armed-if)
   (test-one-armed-if)
-  (display 'bind-args)
-  (test-bind-args)
-  (display 'pair-of-symbols)
-  (test-pair-of-symbols?)
+  ;(display 'bind-args)
+  ;(test-bind-args)
+  ;(display 'pair-of-symbols)
+  ;(test-pair-of-symbols?)
 )
 
 (define r run-all)

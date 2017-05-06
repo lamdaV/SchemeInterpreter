@@ -176,6 +176,9 @@
   [non-reference
     (sym symbol?)
   ]
+  [variable-parameter
+    (sym symbol?)
+  ]
   [reference
     (sym symbol?)
   ]
