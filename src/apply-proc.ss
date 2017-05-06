@@ -487,24 +487,6 @@
       [(null? (car variables)) ; single variable lambda case
         (reverse (cons (map unbox-if-not arguments) accumulator))
       ]
-      ;[(and (null? (cdr variables)) (not (null? (cdr arguments))))
-      ;  (let ([unbox-args (map unbox-if-not arguments)])
-      ;    (pretty-print unbox-args)
-      ;    (reverse (cons unbox-args accumulator))
-      ;  )
-      ;]
-      ;[(symbol? (cdr variables)) ; case for improper list since final arg cannot be a reference
-      ;  (let ([unbox-cdr (map unbox-if-not (cdr arguments))])
-      ;    (cases parameter (car variables)
-      ;      [reference (sym)
-      ;        (reverse (cons* unbox-cdr (car arguments) accumulator))
-      ;      ]
-      ;      [else
-      ;        (reverse (cons* unbox-cdr (unbox-if-not (car arguments)) accumulator))
-      ;      ]
-      ;    )
-      ;  )
-      ;]
       [else
         (cases parameter (car variables)
           [reference (sym)
