@@ -80,7 +80,7 @@
     (false-exp expression?)
   ]
   [set!-exp
-    (variable symbol?)
+    (variable lex-address?)
     (value expression?)
   ]
   [begin-exp
@@ -181,6 +181,9 @@
     (position number?)
   ]
   [free
+    (sym symbol?)
+  ]
+  [undefined
     (sym symbol?)
   ]
 )

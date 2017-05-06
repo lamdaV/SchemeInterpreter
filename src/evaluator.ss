@@ -19,7 +19,7 @@
 
 (define eval-one-exp
   (lambda (x)
-    (top-level-eval (syntax-expand (parse-exp x)))
+    (top-level-eval (lexical-address (syntax-expand (parse-exp x))))
   )
 )
 
@@ -86,7 +86,7 @@
                 (let* ([temp-values (make-list (length values) #f)]
                        [temp-env (extend-env variables temp-values env)])
                   ; for each variables, mutate env
-                  (for-each (lambda (variable value) (mutate-env variable (eval-exp value temp-env) temp-env)) variables values)
+                  (for-each (lambda (position value) (mutate-env (bound 0 position) (eval-exp value temp-env) temp-env)) (iota (length variables)) values)
                   (eval-bodies body temp-env)
                 )
               )
@@ -109,16 +109,23 @@
         [set!-exp (variable value)
           (mutate-env variable (eval-exp value env) env)
         ]
-        [while-exp (test body)
-          (if (eval-exp test env)
-            (begin
-              (eval-bodies body env)
-              (eval-exp exp env)
-            )
-          )
-        ]
         [define-exp (identifier value)
-          (mutate-global-env! identifier (eval-exp value env))
+          (mutate-env (free identifier) (eval-exp value env) global-env)
+        ]
+        [lex-exp (lex-addr)
+          (cases lex-address lex-addr
+            [bound (depth position)
+              (unbox (get-box depth position env))
+            ]
+            [free (sym)
+              (apply-env global-env sym
+                (lambda (value) value)
+                (lambda () (errorf 'apply-env "[ ERROR ]: undefined symbol ~% --- attempting to access undefined symbol ~s" sym)))
+            ]
+            [else
+              (errorf 'eval-exp "[ ERROR ]: malformed lex-exp ~% --- unexpected lex-exp: ~s" exp)
+            ]
+          )
         ]
         [else
           (errorf 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" (unparse-exp exp))

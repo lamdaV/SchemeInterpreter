@@ -24,31 +24,63 @@
   )
 )
 
-(define mutate-global-env!
-  (lambda (sym val)
+(define vector-cons
+  (lambda (val vec)
+    (let ([vec-list (vector->list vec)])
+      (list->vector (cons val vec-list))
+    )
+  )
+)
+
+(define get-box
+  (lambda (depth position env)
+    (cases environment env
+      [extended-env-record (sym vals outer-env)
+        (if (zero? depth)
+          (vector-ref vals position)
+          (get-box (sub1 depth) position outer-env)
+        )
+      ]
+      [else
+        (errorf 'get-box "[ ERROR ]: Invalid depth and position ~% --- the given depth and position do not result is a valid combination: (: ~s ~s)" depth position)
+      ]
+    )
+  )
+)
+
+(define get-global-box
+  (lambda (sym)
     (cases environment global-env
       [extended-env-record (syms vals env)
         (apply-proc-if-exists sym syms
-          (lambda (index) (vector-set! vals index (box val)))
-          (lambda () (set! global-env (extended-env-record (cons sym syms) (vector-cons (box val) vals) (empty-env)))))
+          (lambda (index) (vector-ref vals index))
+          (lambda ()
+            (let* ([new-syms (cons sym syms)]
+                   [new-box (box #f)]
+                   [new-vals (vector-cons new-box vals)])
+              (set! global-env (extended-env-record new-syms new-vals (empty-env)))
+              new-box
+            )
+          ))
       ]
       [else
-        (errorf 'mutate-global-env! "[ ERROR ]: Incompatible argument ~% --- global-env must be an environment of type enxtended-env-record but is an empty-env-record")
+        (errorf 'get-global-box "[ ERROR ]: Incompatible argument ~% --- global-env must be an environment of type extended-env-record but is an empty-env-record")
       ]
     )
   )
 )
 
 (define mutate-env
-  (lambda (sym val env)
-    (cases environment env
-      [empty-env-record ()
-        (mutate-global-env! sym val)
+  (lambda (lex-addr new-value env)
+    (cases lex-address lex-addr
+      [bound (depth position)
+        (set-box! (get-box depth position env) new-value)
       ]
-      [extended-env-record (syms vals outer-env)
-        (apply-proc-if-exists sym syms
-          (lambda (index) (vector-set! vals index (box val)))
-          (lambda () (mutate-env sym val outer-env)))
+      [free (sym)
+        (set-box! (get-global-box sym) new-value)
+      ]
+      [else
+        (errorf 'mutate-env "[ ERROR ]: Unexpected lex-addr ~% --- lex-addr must either be bound or free but was undefined: ~s" lex-addr)
       ]
     )
   )
@@ -103,6 +135,9 @@
           )
         )
       ]
+      [else
+        (errorf 'apply-env "[ ERROR ]: malformed environment ~% --- unexpected environment type: ~s" env)
+      ]
     )
   )
 )
@@ -128,11 +163,3 @@
 
 ; Defines a global-env.
 (define global-env (make-init-env))
-
-(define vector-cons
-  (lambda (val vec)
-    (let ([vec-list (vector->list vec)])
-      (list->vector (cons val vec-list))
-    )
-  )
-)

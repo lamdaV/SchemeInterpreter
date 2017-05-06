@@ -194,7 +194,7 @@
               [else
                   (let ([variable (cadr datum)]
                         [value (caddr datum)])
-                    (set!-exp variable (parse-exp value))
+                    (set!-exp (undefined variable) (parse-exp value))
                   )
               ]
             )
@@ -428,7 +428,22 @@
       ]
       [set!-exp (variable value)
         (let ([decode-value (unparse-exp value)])
-          (cons* 'set! variable value)
+          (cons* 'set!
+                  (cases lex-address variable
+                    [bound (depth position)
+                      (list ': depth position)
+                    ]
+                    [free (sym)
+                      (list ': 'free sym)
+                    ]
+                    [undefined (sym)
+                      sym
+                    ]
+                    [else
+                      (errorf 'unparse-exp "[ ERROR ]: malformed lex-exp ~% --- unexpected lex-exp: ~s" exp)
+                    ]
+                  )
+                  decode-value)
         )
       ]
       [begin-exp (body)
@@ -463,6 +478,25 @@
               [decode-body (map unparse-exp body)])
           (cons* 'for (cons* decode-inits ': decode-test ': decode-update) decode-body)
         )
+      ]
+      [lex-exp (lex-addr)
+        (cases lex-address lex-addr
+          [bound (depth position)
+            (list ': depth position)
+          ]
+          [free (sym)
+            (list ': 'free sym)
+          ]
+          [undefined (sym)
+            (list sym)
+          ]
+          [else
+            (errorf 'unparse-exp "[ ERROR ]: malformed lex-exp ~% --- unexpected lex-exp: ~s" exp)
+          ]
+        )
+      ]
+      [else
+        (error 'unparse-exp "[ ERROR ]: malformed exp ~% --- unsuppored expression type: ~s" exp)
       ]
     )
   )
