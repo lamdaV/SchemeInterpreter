@@ -455,6 +455,29 @@
   )
 )
 
+(define pair->list
+  (lambda (x)
+    (cond
+      [(null? x) x]
+      [(null? (car x)) (list (cdr x))]
+      [else (letrec
+              ([loop
+                (lambda (x acc)
+                  (cond
+                    [(symbol? x) (reverse (cons x acc))]
+                    [(null? x) (reverse acc)]
+                    [else (loop (cdr x) (cons (car x) acc))]
+                  )
+                )
+              ]
+              )
+            (loop x '())
+          )
+      ]
+    )
+  )
+)
+
 (define bind-args
   (lambda (variables arguments accumulator)
     (cond
@@ -482,29 +505,6 @@
       ]
 			; You will add other cases
       [else (errorf 'apply-proc "[ ERROR ]: Malformed proc-value ~% ---  unsuppported proc-value: ~s" proc-value)]
-    )
-  )
-)
-
-(define pair->list
-  (lambda (x)
-    (cond
-      [(null? x) x]
-      [(null? (car x)) (list (cdr x))]
-      [else (letrec
-              ([loop
-                (lambda (x acc)
-                  (cond
-                    [(symbol? x) (reverse (cons x acc))]
-                    [(null? x) (reverse acc)]
-                    [else (loop (cdr x) (cons (car x) acc))]
-                  )
-                )
-              ]
-              )
-            (loop x '())
-          )
-      ]
     )
   )
 )
