@@ -12,6 +12,7 @@
     (load "apply-proc.ss")
     (load "parse.ss")
     (load "syntax-expand.ss")
+    (load "lexical-address.ss")
     (load "evaluator.ss")
     (load "interpreter.ss")
   )

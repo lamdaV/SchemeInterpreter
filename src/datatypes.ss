@@ -48,6 +48,7 @@
 ; Expression datatype.
 (define-datatype expression expression?
   [var-exp (variable symbol?)]
+  [lex-exp (lex-addr lex-address?)]
   [lit-exp (literal (lambda (x) #t))]
   [app-exp
     (operator expression?)
@@ -164,6 +165,22 @@
 
 (define-datatype reference reference?
   [lambda-ref
+    (sym symbol?)
+  ]
+)
+
+(define symbol-number?
+  (lambda (x)
+    (or (symbol? x) (number? x))
+  )
+)
+
+(define-datatype lex-address lex-address?
+  [bound
+    (depth number?)
+    (position number?)
+  ]
+  [free
     (sym symbol?)
   ]
 )
