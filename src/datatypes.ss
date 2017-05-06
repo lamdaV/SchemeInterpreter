@@ -1,3 +1,5 @@
+
+
 ; Clause datatype.
 (define-datatype clause clause?
   [cond-clause
@@ -55,12 +57,12 @@
     (arguments (list-of expression?))
   ]
   [lambda-exact-exp ; used to handle (lambda (x y z) body) [exact argument lambdas]
-    (variables (list-of symbol?))
+    (variables (list-of parameter?))
     (body (list-of expression?))
   ]
   [lambda-exp ; used to handle (lambda (x . y) body) or (lambda x body) [required + optional/many argument lambda]
-    (required (list-of symbol?)) ; It may be an empty list. If so, it is (lambda x body)
-    (optional symbol?)
+    (required (list-of parameter?)) ; It may be an empty list. If so, it is (lambda x body)
+    (optional parameter?)
     (body (list-of expression?))
   ]
   [let-exp ; for let, let*, letrec
@@ -138,13 +140,14 @@
   ]
 )
 
-(define pair-of-symbols?
+; checks if a list or improper-list only contains symbols
+(define pair-of-parameters?
   (lambda (x)
     (cond
-      [(symbol? x) #t]
+      [(parameter? x) #t]
       [(null? x) #t]
       [(equal? '() (car x)) #t]
-      [(symbol? (car x)) (pair-of-symbols? (cdr x))]
+      [(parameter? (car x)) (pair-of-parameters? (cdr x))]
       [else #f]
     )
   )
@@ -157,15 +160,9 @@
    (name symbol?)
   ]
   [closure
-    (variables pair-of-symbols?)
+    (variables pair-of-parameters?)
     (bodies (list-of expression?))
     (env environment?)
-  ]
-)
-
-(define-datatype reference reference?
-  [lambda-ref
-    (sym symbol?)
   ]
 )
 
@@ -173,6 +170,15 @@
   (lambda (x)
     (or (symbol? x) (number? x))
   )
+)
+
+(define-datatype parameter parameter?
+  [non-reference
+    (sym symbol?)
+  ]
+  [reference
+    (sym symbol?)
+  ]
 )
 
 (define-datatype lex-address lex-address?

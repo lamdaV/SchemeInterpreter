@@ -7,9 +7,18 @@
   )
 )
 
+(define box-if-not
+  (lambda (x)
+    (if (box? x)
+      x
+      (box x)
+    )
+  )
+)
+
 (define extend-env
   (lambda (syms vals env)
-    (extended-env-record syms (list->vector (map box vals)) env)
+    (extended-env-record syms (list->vector (map box-if-not vals)) env)
   )
 )
 
@@ -130,7 +139,7 @@
       [extended-env-record (syms vals env)
 	      (let ([pos (list-find-position sym syms)])
       	  (if (number? pos)
-	            (succeed (unbox (vector-ref vals pos)))
+	            (succeed  (vector-ref vals pos))
 	            (apply-env env sym succeed fail)
           )
         )

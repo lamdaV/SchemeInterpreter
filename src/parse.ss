@@ -18,6 +18,12 @@
   )
 )
 
+(define parse-lambda-variables
+  (lambda (variables)
+    (map (lambda (x) (if (symbol? x) (non-reference x) (reference (cadr x)))) variables)
+  )
+)
+
 ; Parser code.
 (define parse-exp
   (lambda (datum)
@@ -39,7 +45,7 @@
               (let ([variables (cadr datum)]
                     [body (map parse-exp (cddr datum))])
                 (cond
-                  [(symbol? variables) (lambda-exp '() variables body)] ; optional/many argument lambda
+                  [(symbol? variables) (lambda-exp '() (non-reference variables) body)] ; optional/many argument lambda
                   [(improper? variables) ; required + optional/many argument lambda
                     (letrec (
                       [parse-improper-list ; (a b . c) --> ((a b) (c)) where the car is the "proper list" and the cadr is the "improper list"
@@ -57,20 +63,24 @@
                       (let* ([parse-variables (parse-improper-list variables '() '())]
                              [required (car parse-variables)]
                              [optional (caadr parse-variables)])
-                        (lambda-exp required optional body)
+                        (cond 
+                          [(not (symbol? optional)) 
+                            (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- optional variable must be a symbol: ~s in ~s" variables datum)]
+                        )
+                        (lambda-exp (parse-lambda-variables required) (non-reference optional) body)
                       )
                     )
                   ]
-                  [(and (list? variables) (andmap symbol? variables)) ; exact argument lambda
+                  [(and (list? variables) (andmap (lambda (x) (or (symbol? x) (and (list? x) (equal? 2 (length x)) (equal? 'ref (car x)) (symbol? (cadr x))))) variables)) ; exact argument lambda
                     (let ([concrete-variables (map parse-exp variables)])
-                      (lambda-exact-exp variables body)
+                      (lambda-exact-exp (parse-lambda-variables variables) body)
                     )
                   ]
                   [(not (list? variables))
                     (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- variables must either be a symbol or a list of symbols: ~s in ~s" variables datum)
                   ]
-                  [(not (andmap symbol? variables))
-                    (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% ---variables must be symbols ~s in ~s" variables datum)
+                  [(not (andmap (lambda (x) (or (symbol? x) (and (list? x) (equal? 2 (length x)) (equal? 'ref (car x)) (symbol? (cadr x))))) variables))
+                    (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% ---variables must be symbols or references: ~s in ~s" variables datum)
                   ]
                   [else
                     (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- cause unknown: ~s in ~s" variables datum)
@@ -343,6 +353,22 @@
   )
 )
 
+(define unparse-parameter
+  (lambda (variable)
+    (cases parameter variable
+      [non-reference (sym)
+        sym
+      ]
+      [reference (sym)
+        (list 'ref sym)
+      ]
+      [else
+        (errorf 'unparse-parameter "[ ERROR ]: unexpected parameter type ~% --- parameter must be either a reference or non-reference type: ~s" param)
+      ]
+    )
+  )
+)
+
 ; Unparser
 (define unparse-exp
   (lambda (datum)
@@ -388,14 +414,14 @@
       [lambda-exp (required optional body)
         (let ([decode-body (map unparse-exp body)])
           (if (null? required) ; If the required arguments is an empty list, this is (lambda x ...) and not (lambda (x . y) ...)
-            (cons* 'lambda optional decode-body)
-            (cons* 'lambda (append required optional) decode-body)
+            (cons* 'lambda (unparse-parameter optional) decode-body)
+            (cons* 'lambda (append (map unparse-parameter required) (unparse-parameter optional)) decode-body)
           )
         )
       ]
       [lambda-exact-exp (variables body)
         (let ([decode-body (map unparse-exp body)])
-          (cons* 'lambda variables decode-body)
+          (cons* 'lambda (map unparse-parameter variables) decode-body)
         )
       ]
       [app-exp (operator arguments)

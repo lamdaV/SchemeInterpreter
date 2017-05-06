@@ -121,7 +121,7 @@
           ]
           [name
             (let ([letrec-variables (list name)]
-                  [letrec-values (list (lambda-exact-exp variables (map syntax-expand body)))]
+                  [letrec-values (list (lambda-exact-exp (map non-reference variables) (map syntax-expand body)))]
                   [letrec-body (list (var-exp name))])
               (app-exp
                 (let-exp 'letrec #f letrec-variables letrec-values letrec-body) ; operator-exp

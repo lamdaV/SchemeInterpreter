@@ -22,6 +22,22 @@
 	)
 )
 
+(define unreference-parameter
+	(lambda (param)
+		(cases parameter param
+			[non-reference (sym)
+				sym
+			]
+			[reference (sym)
+				sym
+			]
+			[else
+				(errorf 'unreference-parameter "[ ERROR ]: unexpected parameter type ~% --- parameter must be either a reference or non-reference type: ~s" param)
+			]
+		)
+	)
+)
+
 (define lexical-address
 	(lambda (exp)
 		(letrec (
@@ -37,15 +53,15 @@
 					  [app-exp (operator arguments)
 					    (let ([lex-operator (notate operator depths)]
 		  	  					[lex-arguments (map-notate arguments depths)])
-		  	  			(app-exp lex-operator lex-arguments)
-		  	  		)
+		  	  				(app-exp lex-operator lex-arguments)
+		  	  			)
 					  ]
 					  [lambda-exact-exp (variables body)
-					  	(lambda-exact-exp variables (map-notate body (cons variables depths)))
+					  	(lambda-exact-exp variables (map-notate body (cons (map unreference-parameter variables) depths)))
 					  ]
 					  [lambda-exp (required optional body)
 					  	(lambda-exp required optional
-					  		(map-notate body (cons (append required (list optional)) depths)))
+					  		(map-notate body (cons (append (map unreference-parameter required) (list (unreference-parameter optional))) depths)))
 					  ]
 					  [let-exp (let-type name variables values body)
 							(if (equal? 'let let-type)

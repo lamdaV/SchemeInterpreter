@@ -481,10 +481,43 @@
 (define bind-args
   (lambda (variables arguments accumulator)
     (cond
-      [(null? variables) (reverse accumulator)]
-      [(null? (car variables)) (reverse (cons arguments accumulator))]
-      [(symbol? (cdr variables)) (reverse (cons* (cdr arguments) (car arguments) accumulator))]
-      [else (bind-args (cdr variables) (cdr arguments) (cons (car arguments) accumulator))]
+      [(null? variables) 
+        (reverse accumulator)
+      ]
+      [(null? (car variables)) ; single variable lambda case
+        (reverse (cons (map unbox-boxed arguments) accumulator))
+      ]
+      [(symbol? (cdr variables)) ; case for improper list since final arg cannot be a reference
+        (let ([unbox-cdr (map unbox-boxed (cdr arguments))])
+          (cases parameter (car variables)
+            [reference (sym)
+              (reverse (cons* unbox-cdr (car arguments) accumulator))
+            ]
+            [else
+              (reverse (cons* unbox-cdr (unbox-boxed (car arguments)) accumulator))
+            ]
+          )
+        )        
+      ]
+      [else
+        (cases parameter (car variables)
+          [reference (sym)
+            (bind-args (cdr variables) (cdr arguments) (cons (car arguments) accumulator))
+          ]
+          [else
+            (bind-args (cdr variables) (cdr arguments) (cons (unbox-boxed (car arguments)) accumulator))
+          ]
+        ) 
+      ]
+    )
+  )
+)
+
+(define unbox-boxed
+  (lambda (arg)
+    (if (box? arg)
+      (unbox arg)
+      arg
     )
   )
 )
@@ -494,13 +527,13 @@
 ;  User-defined procedures will be added later.
 (define apply-proc
   (lambda (proc-value args)
-    (cases proc-val proc-value
+    (cases proc-val (unbox-boxed proc-value)
       [prim-proc (operator)
-        (apply-prim-proc operator args)
+        (apply-prim-proc operator (map unbox-boxed args))
       ]
       [closure (variables bodies env)
         (eval-bodies bodies
-          (extend-env (pair->list variables) (bind-args variables args '()) env)
+          (extend-env (map unreference-parameter (pair->list variables)) (bind-args variables args '()) env)
         )
       ]
 			; You will add other cases

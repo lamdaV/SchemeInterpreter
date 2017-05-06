@@ -25,9 +25,10 @@
 
 (define top-level-eval
   (lambda (form)
+    (unbox-boxed
     (eval-exp form
       (empty-env)
-    )
+    ))
   )
 )
 
@@ -55,19 +56,19 @@
         ]
         [void-exp () (void)]
         [if-then-exp (conditional true-exp)
-          (if (eval-exp conditional env)
-            (eval-exp true-exp env)
+          (if (unbox-boxed (eval-exp conditional env))
+            (unbox-boxed (eval-exp true-exp env))
             (void)
           )
         ]
         [if-else-exp (conditional true-exp false-exp)
-          (if (eval-exp conditional env)
-            (eval-exp true-exp env)
-            (eval-exp false-exp env)
+          (if (unbox-boxed (eval-exp conditional env))
+            (unbox-boxed (eval-exp true-exp env))
+            (unbox-boxed (eval-exp false-exp env))
           )
         ]
         [app-exp (operator arguments)
-          (let ([proc-value (eval-exp operator env)]
+          (let ([proc-value (unbox-boxed (eval-exp operator env))]
                 [args (eval-rands arguments env)])
             (apply-proc proc-value args)
           )
@@ -77,7 +78,7 @@
             [(equal? 'let let-type)
               (if name
                 (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name) ; TODO
-                (eval-bodies body (extend-env variables (eval-rands values env) env))
+                (eval-bodies body (extend-env variables (map unbox-boxed (eval-rands values env)) env))
               )
             ]
             [(equal? 'letrec let-type)
@@ -86,7 +87,7 @@
                 (let* ([temp-values (make-list (length values) #f)]
                        [temp-env (extend-env variables temp-values env)])
                   ; for each variables, mutate env
-                  (for-each (lambda (position value) (mutate-env (bound 0 position) (eval-exp value temp-env) temp-env)) (iota (length variables)) values)
+                  (for-each (lambda (position value) (mutate-env (bound 0 position) (unbox-boxed (eval-exp value temp-env)) temp-env)) (iota (length variables)) values)
                   (eval-bodies body temp-env)
                 )
               )
@@ -107,7 +108,10 @@
           (closure variables body env)
         ]
         [set!-exp (variable value)
-          (mutate-env variable (eval-exp value env) env)
+          (if (box? variable)
+            (set-box! variable (unbox-boxed (eval-exp value env)))
+            (mutate-env variable (unbox-boxed (eval-exp value env)) env)
+          )
         ]
         [define-exp (identifier value)
           (mutate-env (free identifier) (eval-exp value env) global-env)
@@ -115,7 +119,7 @@
         [lex-exp (lex-addr)
           (cases lex-address lex-addr
             [bound (depth position)
-              (unbox (get-box depth position env))
+              (get-box depth position env)
             ]
             [free (sym)
               (apply-env global-env sym
