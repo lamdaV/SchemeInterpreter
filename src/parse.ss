@@ -398,6 +398,9 @@
                                           [implicit-parameter (sym)
                                             sym
                                           ]
+                                          [else
+                                            (errorf 'parse-parameter "[ ERROR ]: unsupported parameter type ~% --- the given parameter is unsupported: ~s" (car param))
+                                          ]
                                         )
                                       )
                                     )
@@ -476,6 +479,9 @@
               [decode-body (map unparse-exp body)])
           (cons* 'for (cons* decode-inits ': decode-test ': decode-update) decode-body)
         )
+      ]
+      [else
+        (errorf 'unparse-exp "[ ERROR ]: unsupported expression ~% --- unparser does not support the given expression ~s" exp)
       ]
     )
   )

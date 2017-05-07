@@ -27,6 +27,9 @@
           )
         )
       ]
+      [else
+        (errorf 'mutate-env "[ ERROR ]: undefined environment ~% --- the given environment is undefined: ~s" env)
+      ]
     )
   )
 )
@@ -79,18 +82,19 @@
           )
         )
       ]
+      (errorf 'apply-env "[ ERROR ]: undefined environment ~% --- the given environment is undefined: ~s" env)
     )
   )
 )
 
 (define make-init-env         ; for now, our initial global environment only contains
-  (lambda () 
+  (lambda ()
     (extend-env            ; procedure names.  Recall that an environment associates
        *prim-proc-names*   ;  a value (not an expression) with an identifier.
        (map prim-proc
             *prim-proc-names*)
        (empty-env)
-    )   
+    )
   )
 )
 
@@ -114,7 +118,7 @@
         )
       ]
       [else
-        (errorf 'mutate-global-env! "[ ERROR ]: Incompatible argument ~% --- global-env must be an environment of type enxtended-env-record but is an empty-env-record")
+        (errorf 'mutate-global-env! "[ ERROR ]: Incompatible argument ~% --- global-env must be an environment of type extended-env-record but is an empty-env-record")
       ]
     )
   )
