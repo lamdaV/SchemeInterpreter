@@ -458,10 +458,20 @@
 (define bind-args
   (lambda (variables arguments accumulator)
     (cond
-      [(null? variables) (reverse accumulator)]
-      [(null? (car variables)) (reverse (cons arguments accumulator))]
-      [(symbol? (cdr variables)) (reverse (cons* (cdr arguments) (car arguments) accumulator))]
-      [else (bind-args (cdr variables) (cdr arguments) (cons (car arguments) accumulator))]
+      [(null? variables) (reverse accumulator)] ; (lambda (x y z) ...)
+      [(null? (car variables)) (reverse (cons arguments accumulator))]  ; (lambda x ...)
+      [else
+        (cases parameter (car variables)
+          [explicit-parameter (sym)
+            (bind-args (cdr variables)
+                       (cdr arguments)
+                       (cons (car arguments) accumulator))
+          ]
+          [implicit-parameter (sym) ; (lambda (x . y) ...)
+            (reverse (cons arguments accumulator))
+          ]
+        )
+      ]
     )
   )
 )
@@ -477,7 +487,7 @@
       ]
       [closure (variables bodies env)
         (eval-bodies bodies
-          (extend-env (pair->list variables) (bind-args variables args '()) env)
+          (extend-env (map dereference-parameter variables) (bind-args variables args '()) env)
         )
       ]
 			; You will add other cases

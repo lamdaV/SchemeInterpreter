@@ -98,10 +98,11 @@
           )
         ]
         [lambda-exp (required optional body)
-          (if (null? required)
-            (closure (cons required optional) body env)
-            (closure (append required optional) body env)
-          )
+          (closure (append required (list optional)) body env)
+          ;(if (null? required)
+          ;  (closure (cons required optional) body env)
+          ;  (closure (append required optional) body env)
+          ;)
         ]
         [lambda-exact-exp (variables body)
           (closure variables body env)

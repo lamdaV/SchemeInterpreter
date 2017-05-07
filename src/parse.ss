@@ -39,7 +39,7 @@
               (let ([variables (cadr datum)]
                     [body (map parse-exp (cddr datum))])
                 (cond
-                  [(symbol? variables) (lambda-exp '() variables body)] ; optional/many argument lambda
+                  [(symbol? variables) (lambda-exp '() (implicit-parameter variables) body)] ; optional/many argument lambda
                   [(improper? variables) ; required + optional/many argument lambda
                     (letrec (
                       [parse-improper-list ; (a b . c) --> ((a b) (c)) where the car is the "proper list" and the cadr is the "improper list"
@@ -57,14 +57,12 @@
                       (let* ([parse-variables (parse-improper-list variables '() '())]
                              [required (car parse-variables)]
                              [optional (caadr parse-variables)])
-                        (lambda-exp required optional body)
+                        (lambda-exp (map explicit-parameter required) (implicit-parameter optional) body)
                       )
                     )
                   ]
                   [(and (list? variables) (andmap symbol? variables)) ; exact argument lambda
-                    (let ([concrete-variables (map parse-exp variables)])
-                      (lambda-exact-exp variables body)
-                    )
+                    (lambda-exact-exp (map explicit-parameter variables) body)
                   ]
                   [(not (list? variables))
                     (errorf 'parse-exp "[ ERROR ]: malformed lambda variables ~% --- variables must either be a symbol or a list of symbols: ~s in ~s" variables datum)
@@ -389,16 +387,28 @@
         )
       ]
       [lambda-exp (required optional body)
-        (let ([decode-body (map unparse-exp body)])
-          (if (null? required) ; If the required arguments is an empty list, this is (lambda x ...) and not (lambda (x . y) ...)
-            (cons* 'lambda optional decode-body)
-            (cons* 'lambda (append required optional) decode-body)
-          )
+        (letrec ([parse-parameter (lambda (params)
+                                    (let parse ([params params])
+                                      (if (null? params)
+                                        '()
+                                        (cases parameter (car params)
+                                          [explicit-parameter (sym)
+                                            (cons sym (parse (cdr params)))
+                                          ]
+                                          [implicit-parameter (sym)
+                                            sym
+                                          ]
+                                        )
+                                      )
+                                    )
+                                  )]
+                 [decode-body (map unparse-exp body)])
+          (cons* 'lambda (parse-parameter (append required (list optional))) decode-body)
         )
       ]
       [lambda-exact-exp (variables body)
         (let ([decode-body (map unparse-exp body)])
-          (cons* 'lambda variables decode-body)
+          (cons* 'lambda (map dereference-parameter variables) decode-body)
         )
       ]
       [app-exp (operator arguments)

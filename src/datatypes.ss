@@ -68,12 +68,12 @@
     (arguments (list-of expression?))
   ]
   [lambda-exact-exp ; used to handle (lambda (x y z) body) [exact argument lambdas]
-    (variables (list-of symbol?))
+    (variables (list-of parameter?))
     (body (list-of expression?))
   ]
   [lambda-exp ; used to handle (lambda (x . y) body) or (lambda x body) [required + optional/many argument lambda]
-    (required (list-of symbol?)) ; It may be an empty list. If so, it is (lambda x body)
-    (optional symbol?)
+    (required (list-of parameter?)) ; It may be an empty list. If so, it is (lambda x body)
+    (optional parameter?)
     (body (list-of expression?))
   ]
   [let-exp ; for let, let*, letrec
@@ -163,8 +163,33 @@
    (name symbol?)
   ]
   [closure
-    (variables pair-of-symbols?)
+    (variables (list-of parameter?))
     (bodies (list-of expression?))
     (env environment?)
+  ]
+)
+
+(define dereference-parameter
+  (lambda (param)
+    (cases parameter param
+      [explicit-parameter (sym)
+        sym
+      ]
+      [implicit-parameter (sym)
+        sym
+      ]
+      [else
+        (errorf 'dereference-parameter "[ ERROR ]: Unknown parameter type ~% --- the given parameter is not defined: ~s" param)
+      ]
+    )
+  )
+)
+
+(define-datatype parameter parameter?
+  [explicit-parameter ; (lambda (x y z) ...) and x y z are explicit
+    (sym symbol?)
+  ]
+  [implicit-parameter ; (lambda x ...) or (lambda (y . x) ...) and x is implicit
+    (sym symbol?)
   ]
 )

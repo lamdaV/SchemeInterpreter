@@ -121,7 +121,7 @@
           ]
           [name
             (let ([letrec-variables (list name)]
-                  [letrec-values (list (lambda-exact-exp variables (map syntax-expand body)))]
+                  [letrec-values (list (lambda-exact-exp (map explicit-parameter variables) (map syntax-expand body)))]
                   [letrec-body (list (var-exp name))])
               (app-exp
                 (let-exp 'letrec #f letrec-variables letrec-values letrec-body) ; operator-exp
@@ -158,12 +158,12 @@
         (set!-exp variable (syntax-expand value))
       ]
       [while-exp (test body)
-        (let* ([lambda-body 
-                (if-then-exp test 
+        (let* ([lambda-body
+                (if-then-exp test
                   (begin-exp (append body (list (app-exp (var-exp 'loop) '()))))
                 )
                ]
-               [loop-value 
+               [loop-value
                 (lambda-exact-exp '()
                   (list lambda-body)
                 )

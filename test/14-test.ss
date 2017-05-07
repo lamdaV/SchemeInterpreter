@@ -131,7 +131,7 @@
     )]
      [answers
        (list
-          (bind-args '(y . x) '(1) '()) 
+          (bind-args '(y . x) '(1) '())
           (bind-args '(x) '(2) '())
           (bind-args '(x y z w) '(1 2 3 4) '())
           (bind-args '(() . x) '() '())
@@ -156,7 +156,7 @@
     )]
      [answers
        (list
-          (pair-of-symbols? '(y . x)) 
+          (pair-of-symbols? '(y . x))
           (pair-of-symbols? '(x))
           (pair-of-symbols? '(x y z w))
           (pair-of-symbols? '(() . x))
@@ -365,10 +365,10 @@
   (test-syntactic-expansion)
   (display 'one-armed-if)
   (test-one-armed-if)
-  (display 'bind-args)
-  (test-bind-args)
-  (display 'pair-of-symbols)
-  (test-pair-of-symbols?)
+  ;(display 'bind-args)
+  ;(test-bind-args)
+  ;(display 'pair-of-symbols)
+  ;(test-pair-of-symbols?)
 )
 
 (define r run-all)
