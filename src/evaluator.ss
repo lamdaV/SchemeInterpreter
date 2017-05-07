@@ -1,19 +1,30 @@
+(define map-cps
+	(lambda (proc-cps L k)
+		(if (null? L)
+			(apply-k k '())
+			(map-cps
+				proc-cps
+				(cdr L)
+				(proc-k proc-cps (car L) k)
+			)
+		)
+	)
+)
+
 (define eval-bodies
-  (lambda (bodies env)
+  (lambda (bodies env k)
     (if (null? (cdr bodies))
-      (eval-exp (car bodies) env)
-      (begin
-        (eval-exp (car bodies) env)
-        (eval-bodies (cdr bodies) env)
-      )
+      (eval-exp (car bodies) env k)
+      ; (eval-bodies (cdr bodies) env)
+      (eval-exp (car bodies) env (eval-body-k cdr-bodies env k))
     )
   )
 )
 
 ; evaluate the list of operands, putting results into a list
 (define eval-rands
-  (lambda (rands env)
-    (map (lambda (exp) (eval-exp exp env)) rands)
+  (lambda (rands env k)
+    (map-cps (lambda (exp c) (eval-exp exp env c)) rands k)
   )
 )
 
@@ -27,6 +38,7 @@
   (lambda (form)
     (eval-exp form
       (empty-env)
+      (init-k)
     )
   )
 )
@@ -35,42 +47,40 @@
 
 (define eval-exp
   (let ([identity-proc (lambda (x) x)])
-    (lambda (exp env)
+    (lambda (exp env k)
       (cases expression exp
-        [lit-exp (datum) datum]
+        [lit-exp (datum)
+          (apply-k k datum)
+        ]
         [var-exp (variable)
           (apply-env env
-            variable
-            identity-proc ; procedure to call if var is in env
-            (lambda () ; procedure to call if var is not in env
-              (apply-env global-env
-                         variable ; look up its value.
-                         identity-proc ; procedure to call if variable is in the environment
-                         (lambda ()
-                           (errorf 'apply-env ; procedure to call if variable not in env
-                                  "[ ERROR ]: Unable to find variable in environment ~% --- variable not found in environment: ~s"
-                                  variable)))
-            )
-          )
+                     variable
+                     k ; procedure to call if var is in env
+                     (apply-global-k 'apply-env variable k))
         ]
-        [void-exp () (void)]
+        [void-exp ()
+          (apply-k k (void))
+        ]
         [if-then-exp (conditional true-exp)
-          (if (eval-exp conditional env)
-            (eval-exp true-exp env)
-            (void)
-          )
+        ;   (if (eval-exp conditional env)
+        ;     (eval-exp true-exp env)
+        ;     (void)
+        ;   )
+          (eval-exp conditional env (branch-one-k true-exp k))
         ]
         [if-else-exp (conditional true-exp false-exp)
-          (if (eval-exp conditional env)
-            (eval-exp true-exp env)
-            (eval-exp false-exp env)
-          )
+          ; (if (eval-exp conditional env)
+          ;   (eval-exp true-exp env)
+          ;   (eval-exp false-exp env)
+          ; )
+          (eval-exp conditional env (branch-two-k true-exp false-exp k))
         ]
         [app-exp (operator arguments)
-          (let ([proc-value (eval-exp operator env)]
-                [args (eval-rands arguments env)])
-            (apply-proc proc-value args)
-          )
+          ; (let ([proc-value (eval-exp operator env)]
+          ;       [args (eval-rands arguments env)])
+          ;   (apply-proc proc-value args)
+          ; )
+          (eval-exp operator env (operator-k arguments env k))
         ]
         [let-exp (let-type name variables values body)
           (cond
@@ -98,23 +108,18 @@
           )
         ]
         [lambda-exp (required optional body)
-          (closure (append required (list optional)) body env)
+          (apply-k k (closure (append required (list optional)) body env))
+        ]
         [lambda-exact-exp (variables body)
-          (closure variables body env)
+          (apply-k k (closure variables body env))
         ]
         [set!-exp (variable value)
-          (mutate-env variable (eval-exp value env) env)
-        ]
-        [while-exp (test body)
-          (if (eval-exp test env)
-            (begin
-              (eval-bodies body env)
-              (eval-exp exp env)
-            )
-          )
+          ; (mutate-env variable (eval-exp value env) env)
+          (eval-exp value env (set-k variable env k))
         ]
         [define-exp (identifier value)
-          (mutate-global-env! identifier (eval-exp value env))
+          ; (mutate-global-env! identifier (eval-exp value env))
+          (eval-exp value env (define-k identifier k))
         ]
         [else
           (errorf 'eval-exp "[ ERROR ]: Malformed syntax ~% --- unexpected expression: ~s" (unparse-exp exp))

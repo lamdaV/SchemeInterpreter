@@ -1,3 +1,83 @@
+(define apply-k
+  (lambda (k v)
+    (cases exp-k k
+      [init-k () v]
+
+      ; one-armed-if
+      [branch-one-k (true-exp env c)
+        (let ([conditional-value v])
+          (if conditional-value
+            (eval-exp true-exp env c)
+          )
+        )
+      ]
+
+      ; two-armed-if
+      [branch-two-k (true-exp false-exp env c)
+        (let ([conditional-value v])
+          (if conditional-value
+            (eval-exp true-exp env c)
+            (eval-exp false-exp env c)
+          )
+        )
+      ]
+
+      ; app-exp
+      [operator-k (arguments env c)
+        (let ([operator v])
+          (eval-rands arguments env (app-k operator c))
+        )
+      ]
+      [app-k (operator c)
+        (let ([arguments v])
+          (apply-proc operator arguments ( c) ; TODO: applyproc needs a continuation.
+        )
+      ]
+
+      ; set!
+      [set-k (variable env c)
+        (let ([value v])
+          (apply-k c (mutate-env variable value env))
+        )
+      ]
+
+      ; define
+      [define-k (identifier c)
+        (let ([value v])
+          (apply-k c (mutate-global-env! identifier value))
+        )
+      ]
+
+      ; map-cps
+      [proc-k (proc-cps car-L c)
+        (let ([ls v])
+          (proc-cps car-L (cons-k ls c))
+        )
+      ]
+      [cons-k (ls c)
+        (let ([changed-car v])
+          (apply-k c (cons changed-car ls))
+        )
+      ]
+
+      ; eval-bodies
+      [eval-body-k (cdr-bodies env c)
+        (eval-bodies cdr-bodies env c)
+      ]
+
+      [apply-global-k (fail-sym variable c)
+        (apply-env global-env
+                   variable ; look up its value.
+                   c ; procedure to call if variable is in the environment
+                   (error-k fail-symbol variable "[ ERROR ]: Unable to find variable in environment ~% --- variable not found in environment: ~s" fail-sym))
+      ]
+      [error-k (fail-sym variable message)
+        (errorf fail-sym message variable)
+      ]
+    )
+  )
+)
+
 (define apply-continuation
   (lambda (k . v)
     (apply k v)
