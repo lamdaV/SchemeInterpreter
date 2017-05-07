@@ -1,32 +1,4 @@
 ;; Parsed expression datatypes
-
-(define clause? ; ((objs ...) e1 e2 ...)
-  (lambda (x)
-    (let ([length (length x)])
-      (cond
-        [(< length 2) #f]
-        [(not (list? (car x))) #f]
-        [(not (andmap expression? (cdr x))) #f]
-        [else #t]
-      )
-    )
-  )
-)
-
-(define-datatype clause clause?
-  [cond-clause
-    (conditonal expression?)
-    (body (list-of expression?))
-  ]
-  [case-clause
-    (keys list?)
-    (body (list-of expression?))
-  ]
-  [else-clause
-    (body (list-of expression?))
-  ]
-)
-
 (define cond-clause?
   (lambda (c)
     (cases clause c
@@ -57,6 +29,20 @@
       ]
     )
   )
+)
+
+(define-datatype clause clause?
+  [cond-clause
+    (conditonal expression?)
+    (body (list-of expression?))
+  ]
+  [case-clause
+    (keys list?)
+    (body (list-of expression?))
+  ]
+  [else-clause
+    (body (list-of expression?))
+  ]
 )
 
 ; Expression datatype.
@@ -143,18 +129,6 @@
   ]
 )
 
-(define pair-of-symbols?
-  (lambda (x)
-    (cond
-      [(symbol? x) #t]
-      [(null? x) #t]
-      [(equal? '() (car x)) #t]
-      [(symbol? (car x)) (pair-of-symbols? (cdr x))]
-      [else #f]
-    )
-  )
-)
-
 ; datatype for procedures.  At first there is only one
 ; kind of procedure, but more kinds will be added later.
 
@@ -191,5 +165,76 @@
   ]
   [implicit-parameter ; (lambda x ...) or (lambda (y . x) ...) and x is implicit
     (sym symbol?)
+  ]
+)
+
+(define-datatype exp-k exp-k?
+  [init-k]
+  [apply-global-k
+    (fail-sym symbol?)
+    (variable symbol?)
+    (c exp-k?)
+  ]
+  [error-k
+    (variable symbol?)
+    (message string?)
+  ]
+
+  ; one-armed-if
+  [branch-one-k
+    (true-exp expression?)
+    (env environment?)
+    (c exp-k?)
+  ]
+
+  ; two-armed-if
+  [branch-two-k
+    (true-exp expression?)
+    (false-exp expression?)
+    (env environment?)
+    (c exp-k?)
+  ]
+
+  ; app-exp
+  [operator-k
+    (arguments (list-of expression?))
+    (env environment?)
+    (c exp-k?)
+  ]
+  [app-k
+    (operator scheme-value?)
+    (arguments (list-of scheme-value?))
+    (c exp-k?)
+  ]
+
+  ; set!
+  [set-k
+    (variable symbol?)
+    (env environment?)
+    (c exp-k?)
+  ]
+
+  ; define
+  [define-k
+    (identifier symbol?)
+    (c exp-k?)
+  ]
+
+  ; map-cps
+  [proc-k
+    (proc-cps procedure?)
+    (car-L scheme-value?)
+    (c exp-k?)
+  ]
+  [cons-k
+    (ls list?)
+    (c exp-k?)
+  ]
+
+  ; eval-bodies
+  [eval-body-k
+    (cdr-bodies (list-of expression?))
+    (env environment?)
+    (c exp-k?)
   ]
 )
