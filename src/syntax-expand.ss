@@ -158,7 +158,21 @@
         (set!-exp variable (syntax-expand value))
       ]
       [while-exp (test body)
-        (while-exp (syntax-expand test) (map syntax-expand body))
+        (let* ([lambda-body 
+                (if-then-exp test 
+                  (begin-exp (append body (list (app-exp (var-exp 'loop) '()))))
+                )
+               ]
+               [loop-value 
+                (lambda-exact-exp '()
+                  (list lambda-body)
+                )
+               ]
+               [let-body
+                (app-exp (var-exp 'loop) '())
+               ])
+          (syntax-expand (let-exp 'letrec #f '(loop) (list loop-value) (list let-body)))
+        )
       ]
       [define-exp (identifier value)
         (define-exp identifier (syntax-expand value))
