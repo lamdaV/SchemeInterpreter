@@ -176,6 +176,7 @@
     (c exp-k?)
   ]
   [error-k
+    (fail-sym symbol?)
     (variable symbol?)
     (message string?)
   ]
@@ -203,7 +204,6 @@
   ]
   [app-k
     (operator scheme-value?)
-    (arguments (list-of scheme-value?))
     (c exp-k?)
   ]
 
@@ -248,10 +248,10 @@
   ]
 
   ; let
-  [eval-rands-k 
+  [eval-rands-k
     (body (list-of expression?))
-    (variables (list-of symbol?)) 
-    (env environment?) 
+    (variables (list-of symbol?))
+    (env environment?)
     (c exp-k?)
   ]
 )

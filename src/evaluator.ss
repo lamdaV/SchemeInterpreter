@@ -2,11 +2,9 @@
 	(lambda (proc-cps L k)
 		(if (null? L)
 			(apply-k k '())
-			(map-cps
-				proc-cps
-				(cdr L)
-				(proc-k proc-cps (car L) k)
-			)
+			(map-cps proc-cps
+							 (cdr L)
+				  	 	 (proc-k proc-cps (car L) k))
 		)
 	)
 )
@@ -97,7 +95,6 @@
                 (let* ([temp-values (make-list (length values) #f)]
                        [temp-env (extend-env variables temp-values env)])
                   ; for each variables, mutate env
-                  ; (for-each (lambda (variable value) (eval-exp value temp-env) variables values)
                   ; (for-each (lambda (variable value) (mutate-env variable (eval-exp value temp-env) temp-env)) variables values)
                   ; (eval-bodies body temp-env k)
                   (eval-exp (car values) temp-env (for-each-k variables values temp-env body k))
@@ -106,7 +103,6 @@
             ]
             [else
               (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- let-type: ~s" let-type)
-              ; TODO:
             ]
           )
         ]

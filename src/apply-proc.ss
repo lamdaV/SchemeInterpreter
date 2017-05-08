@@ -30,7 +30,7 @@
       ]
       [app-k (operator c)
         (let ([arguments v])
-          (apply-proc operator arguments ( c) ; TODO: applyproc needs a continuation.
+          (apply-proc operator arguments c) ; TODO: applyproc needs a continuation.
         )
       ]
 
@@ -77,7 +77,7 @@
 
       ;letrec
       [for-each-k (variables values env body c)
-        (let 
+        (let
           ([evaluated-value v]
            [mutating-variable (car variables)]
            [values-left (cdr values)]
@@ -92,7 +92,7 @@
               (eval-exp (car cdr-values) env (for-each-k variables-left values-left env body c))
             )
           )
-        ) 
+        )
       ]
 
       ; let
@@ -115,29 +115,29 @@
 ; Usually an interpreter must define each
 ; built-in procedure individually.  We are "cheating" a little bit.
 (define apply-prim-proc
-  (lambda (prim-proc args)
+  (lambda (prim-proc args k)
     (let ([arg-length (length args)])
       (case prim-proc
         [(+)
-          (if ((list-of number?) args)
+          (if (andmap number? args)
             (apply + args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed + argument ~% --- + expects arguments a list of numbers: ~s" args)
           )
         ]
         [(-)
-          (if ((list-of number?) args)
+          (if (andmap number? args)
             (apply - args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed - argument ~% --- - expects arguments a list of numbers: ~s" args)
           )
         ]
         [(*)
-          (if ((list-of number?) args)
+          (if (andmap number? args)
             (apply * args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed * argument ~% --- * expects arguments a list of numbers: ~s" args)
           )
         ]
         [(/)
-          (if ((list-of number?) args)
+          (if (andmap number? args)
             (apply / args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- / expects arguments a list of numbers: ~s" args)
           )
@@ -153,25 +153,25 @@
           )
         ]
         [(<)
-          (if (and (not (null? args)) ((list-of number?) args))
+          (if (and (not (null? args)) (andmap number? args))
             (apply < args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed < argument ~% --- < expects arguments a list of numbers: ~s" args)
           )
         ]
         [(>)
-          (if (and (not (null? args)) ((list-of number?) args))
+          (if (and (not (null? args)) (andmap number? args))
             (apply > args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed > argument ~% --- > expects arguments a list of numbers: ~s" args)
           )
         ]
         [(>=)
-          (if (and (not (null? args)) ((list-of number?) args))
+          (if (and (not (null? args)) (andmap number? args))
             (apply >= args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed >= argument ~% --- >= expects arguments a list of numbers: ~s" args)
           )
         ]
         [(<=)
-          (if (and (not (null? args)) ((list-of number?) args))
+          (if (and (not (null? args)) (andmap number? args))
             (apply <= args)
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed <= argument ~% --- <= expects arguments a list of numbers: ~s" args)
           )
@@ -306,7 +306,7 @@
         [(assq)
           (cond
             [(not (equal? 2 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- assq expects two arguments: ~s in ~s" arg-length args)]
-            [(not ((list-of pair?) (2nd args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed assq arguments ~% --- assq expects its second argument to be a list of lists: ~s in ~s" (2nd args) args)]
+            [(not (andmap pair? (2nd args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed assq arguments ~% --- assq expects its second argument to be a list of lists: ~s in ~s" (2nd args) args)]
             [else (assq (1st args) (2nd args))]
           )
         ]
@@ -387,7 +387,8 @@
           (cond
             [(not (equal? 2 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- vector-ref expects two arguments: ~s in ~s" arg-length args)]
             [(not (vector? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the first argument to be a vector: ~s in ~s" (1st args) args)]
-            [(not (or (fixnum? (2nd args)) (positive? (2nd args)) (zero? (2nd args)))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the second argument to be a nonnegative fixnum: ~s in ~s" (2nd args) args)]
+            [(not (ormap (lambda (proc) (proc (2nd args))) (list fixnum? positive? zero?)))
+               (errorf 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the second argument to be a nonnegative fixnum: ~s in ~s" (2nd args) args)]
             [(>= (2nd args) (vector-length (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the second argument to be less than the length of the vector: ~s > ~s" (2nd args) (length (1st args)))]
             [else (vector-ref (1st args) (2nd args))]
           )
@@ -488,14 +489,14 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed apply arguments ~% --- apply's last argument be a list: ~s in ~s" (car (last-pair args)) args)
             ]
             [else
-              (apply-proc (car args) (apply cons* (cdr args)))
+              (apply-proc (car args) (apply cons* (cdr args)) k)
             ]
           )
         ]
         [(map)
           (let ([proc (car args)]
                 [align-args (apply map list (cdr args))])
-            (map (lambda (arg) (apply-proc proc arg)) align-args)
+            (map-cps (lambda (arg k) (apply-proc proc arg k)) align-args k)
           )
         ]
         [(member)
@@ -591,10 +592,10 @@
 ;  At this point, we only have primitive procedures.
 ;  User-defined procedures will be added later.
 (define apply-proc
-  (lambda (proc-value args)
+  (lambda (proc-value args k)
     (cases proc-val proc-value
       [prim-proc (operator)
-        (apply-prim-proc operator args)
+        (apply-prim-proc operator args k)
       ]
       [closure (variables bodies env)
         (eval-bodies bodies
