@@ -74,6 +74,34 @@
       [error-k (fail-sym variable message)
         (errorf fail-sym message variable)
       ]
+
+      ;letrec
+      [for-each-k (variables values env body c)
+        (let 
+          ([evaluated-value v]
+           [mutating-variable (car variables)]
+           [values-left (cdr values)]
+           [variables-left (cdr variables)])
+          (if (null? (cdr values))
+            (begin
+              (mutate-env mutating-variable evaluated-value env)
+              (eval-bodies body env c)
+            )
+            (begin
+              (mutate-env mutating-variable evaluated-value env)
+              (eval-exp (car cdr-values) env (for-each-k variables-left values-left env body c))
+            )
+          )
+        ) 
+      ]
+
+      ; let
+      [eval-rands-k (body variables env c)
+        (let* ([evaluated-args v]
+               [extended-env (extend-env variables evaluated-args env)])
+          (eval-bodies body extended-env c)
+        )
+      ]
     )
   )
 )

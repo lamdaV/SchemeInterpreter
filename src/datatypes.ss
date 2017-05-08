@@ -237,4 +237,21 @@
     (env environment?)
     (c exp-k?)
   ]
+
+  ; letrec
+  [for-each-k
+    (variables (list-of symbol?))
+    (values (list-of expression?))
+    (env environment?)
+    (body (list-of expression?))
+    (c exp-k?)
+  ]
+
+  ; let
+  [eval-rands-k 
+    (body (list-of expression?))
+    (variables (list-of symbol?)) 
+    (env environment?) 
+    (c exp-k?)
+  ]
 )

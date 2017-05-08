@@ -87,7 +87,8 @@
             [(equal? 'let let-type)
               (if name
                 (errorf 'eval-exp "[ ERROR ]: Unsupported let type ~% --- name let unsupported: ~s" name) ; TODO
-                (eval-bodies body (extend-env variables (eval-rands values env) env))
+                ;(eval-bodies body (extend-env variables (eval-rands values env) env))
+                (eval-rands values env (eval-rands-k body variables env k))
               )
             ]
             [(equal? 'letrec let-type)
@@ -96,8 +97,10 @@
                 (let* ([temp-values (make-list (length values) #f)]
                        [temp-env (extend-env variables temp-values env)])
                   ; for each variables, mutate env
-                  (for-each (lambda (variable value) (mutate-env variable (eval-exp value temp-env) temp-env)) variables values)
-                  (eval-bodies body temp-env)
+                  ; (for-each (lambda (variable value) (eval-exp value temp-env) variables values)
+                  ; (for-each (lambda (variable value) (mutate-env variable (eval-exp value temp-env) temp-env)) variables values)
+                  ; (eval-bodies body temp-env k)
+                  (eval-exp (car values) temp-env (for-each-k variables values temp-env body k))
                 )
               )
             ]
