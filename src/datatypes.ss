@@ -141,6 +141,9 @@
     (bodies (list-of expression?))
     (env environment?)
   ]
+  [continuation-proc
+    (k exp-k?)
+  ]
 )
 
 (define dereference-parameter

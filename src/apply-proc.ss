@@ -552,6 +552,9 @@
             ]
           )
         ]
+        [(call/cc)
+          (apply-proc (car args) (list (continuation-proc k)) k)
+        ]
         [else
           (errorf 'apply-prim-proc "[ ERROR ]: Bad primitive procedure name ~% --- undefined primitive procedure: ~s" prim-proc)
         ]
@@ -597,6 +600,9 @@
         (eval-bodies bodies
                      (extend-env (map dereference-parameter variables) (bind-args variables args '()) env)
                      k)
+      ]
+      [continuation-proc (k)
+        (apply-k k (car args))
       ]
 			; You will add other cases
       [else (errorf 'apply-proc "[ ERROR ]: Malformed proc-value ~% ---  unsuppported proc-value: ~s" proc-value)]

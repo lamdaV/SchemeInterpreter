@@ -1,4 +1,4 @@
-(define *prim-proc-names* '(+ - * / add1 sub1 = > < >= <= zero? not quotient cons member car cdr cadr caar cdar cddr caaar cdaar cadar caadr cddar cdadr caddr cdddr list null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline cadar map apply append eqv? list-tail))
+(define *prim-proc-names* '(+ - * / add1 sub1 = > < >= <= zero? not quotient cons member car cdr cadr caar cdar cddr caaar cdaar cadar caadr cddar cdadr caddr cdddr list null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline cadar map apply append eqv? list-tail call/cc))
 
 ; Environment definitions for CSSE 304 Scheme interpreter.  Based on EoPL section 2.3
 (define empty-env
