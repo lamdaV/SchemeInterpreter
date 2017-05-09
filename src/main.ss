@@ -29,7 +29,7 @@
   )
 )
 
-(define SUPPORTED_SELECTOR (list 13 14 16 17 2))
+(define SUPPORTED_SELECTOR (list 13 14 16 17 2 18))
 
 (define load-test
   (lambda (selector)

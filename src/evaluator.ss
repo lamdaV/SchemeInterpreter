@@ -14,7 +14,7 @@
     (if (null? (cdr bodies))
       (eval-exp (car bodies) env k)
       ; (eval-bodies (cdr bodies) env)
-      (eval-exp (car bodies) env (eval-body-k cdr-bodies env k))
+      (eval-exp (car bodies) env (eval-body-k (cdr bodies) env k))
     )
   )
 )
@@ -42,7 +42,6 @@
 )
 
 ; eval-exp is the main component of the interpreter
-
 (define eval-exp
   (let ([identity-proc (lambda (x) x)])
     (lambda (exp env k)
@@ -64,14 +63,14 @@
           ;   (eval-exp true-exp env)
           ;   (void)
           ; )
-          (eval-exp conditional env (branch-one-k true-exp k))
+          (eval-exp conditional env (branch-two-k true-exp (void-exp) env k))
         ]
         [if-else-exp (conditional true-exp false-exp)
           ; (if (eval-exp conditional env)
           ;   (eval-exp true-exp env)
           ;   (eval-exp false-exp env)
           ; )
-          (eval-exp conditional env (branch-two-k true-exp false-exp k))
+          (eval-exp conditional env (branch-two-k true-exp false-exp env k))
         ]
         [app-exp (operator arguments)
           ; (let ([proc-value (eval-exp operator env)]
@@ -97,7 +96,7 @@
                   ; for each variables, mutate env
                   ; (for-each (lambda (variable value) (mutate-env variable (eval-exp value temp-env) temp-env)) variables values)
                   ; (eval-bodies body temp-env k)
-                  (eval-exp (car values) temp-env (for-each-k variables values temp-env body k))
+                  (eval-exp (car values) temp-env (mutate-letrec-env-k variables values temp-env body k))
                 )
               )
             ]

@@ -24,13 +24,13 @@
 
       ; app-exp
       [operator-k (arguments env c)
-        (let ([operator v])
-          (eval-rands arguments env (app-k operator c))
+        (let ([evaluated-operator v])
+          (eval-rands arguments env (app-k evaluated-operator c))
         )
       ]
       [app-k (operator c)
         (let ([arguments v])
-          (apply-proc operator arguments c) ; TODO: applyproc needs a continuation.
+          (apply-proc operator arguments c)
         )
       ]
 
@@ -69,28 +69,23 @@
         (apply-env global-env
                    variable ; look up its value.
                    c ; procedure to call if variable is in the environment
-                   (error-k fail-symbol variable "[ ERROR ]: Unable to find variable in environment ~% --- variable not found in environment: ~s" fail-sym))
+                   (error-k fail-sym variable "[ ERROR ]: Unable to find variable in environment ~% --- variable not found in environment: ~s"))
       ]
       [error-k (fail-sym variable message)
         (errorf fail-sym message variable)
       ]
 
       ;letrec
-      [for-each-k (variables values env body c)
-        (let
-          ([evaluated-value v]
-           [mutating-variable (car variables)]
-           [values-left (cdr values)]
-           [variables-left (cdr variables)])
+      [mutate-letrec-env-k (variables values env body c)
+        (let ([evaluated-value v]
+              [mutating-variable (car variables)]
+              [values-left (cdr values)]
+              [variables-left (cdr variables)])
+          (mutate-env mutating-variable evaluated-value env)
           (if (null? (cdr values))
-            (begin
-              (mutate-env mutating-variable evaluated-value env)
-              (eval-bodies body env c)
-            )
-            (begin
-              (mutate-env mutating-variable evaluated-value env)
-              (eval-exp (car cdr-values) env (for-each-k variables-left values-left env body c))
-            )
+            (eval-bodies body env c)
+            (eval-exp (car values-left) env (mutate-letrec-env-k variables-left values-left env body c))
+
           )
         )
       ]
@@ -120,25 +115,25 @@
       (case prim-proc
         [(+)
           (if (andmap number? args)
-            (apply + args)
+            (apply-k k (apply + args))
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed + argument ~% --- + expects arguments a list of numbers: ~s" args)
           )
         ]
         [(-)
           (if (andmap number? args)
-            (apply - args)
+            (apply-k k (apply - args))
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed - argument ~% --- - expects arguments a list of numbers: ~s" args)
           )
         ]
         [(*)
           (if (andmap number? args)
-            (apply * args)
+            (apply-k k (apply * args))
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed * argument ~% --- * expects arguments a list of numbers: ~s" args)
           )
         ]
         [(/)
           (if (andmap number? args)
-            (apply / args)
+            (apply-k k (apply / args))
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed / argument ~% --- / expects arguments a list of numbers: ~s" args)
           )
         ]
@@ -148,61 +143,61 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed quotient argument ~% --- quotient expects exactly two integer arguments: ~s" args)
             ]
             [else
-              (apply quotient args)
+              (apply-k k (apply quotient args))
             ]
           )
         ]
         [(<)
           (if (and (not (null? args)) (andmap number? args))
-            (apply < args)
+            (apply-k k (apply < args))
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed < argument ~% --- < expects arguments a list of numbers: ~s" args)
           )
         ]
         [(>)
           (if (and (not (null? args)) (andmap number? args))
-            (apply > args)
+            (apply-k k (apply > args))
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed > argument ~% --- > expects arguments a list of numbers: ~s" args)
           )
         ]
         [(>=)
           (if (and (not (null? args)) (andmap number? args))
-            (apply >= args)
+            (apply-k k (apply >= args))
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed >= argument ~% --- >= expects arguments a list of numbers: ~s" args)
           )
         ]
         [(<=)
           (if (and (not (null? args)) (andmap number? args))
-            (apply <= args)
+            (apply-k k (apply <= args))
             (errorf 'apply-prim-proc "[ ERROR ]: Malformed <= argument ~% --- <= expects arguments a list of numbers: ~s" args)
           )
         ]
         [(not)
           (if (equal? 1 arg-length)
-            (not (1st args))
+            (apply-k k (not (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- not expects one argument: ~s in ~s" arg-length args)
           )
         ]
         [(zero?)
           (if (equal? 1 arg-length)
-            (zero? (1st args))
+            (apply-k k (zero? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- zero? expects one argument: ~s in ~s" arg-length args)
           )
         ]
         [(add1)
           (if (equal? 1 arg-length)
-            (add1 (1st args))
+            (apply-k k (add1 (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- add1 expects one argument: ~s in ~s" arg-length args)
           )
         ]
         [(sub1)
           (if (equal? 1 arg-length)
-            (sub1 (1st args))
+            (apply-k k (sub1 (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- sub1 expects one argument: ~s in ~s" arg-length args)
           )
         ]
         [(cons)
           (if (equal? 2 arg-length)
-            (cons (1st args) (2nd args))
+            (apply-k k (cons (1st args) (2nd args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- cons expects two arguments: ~s in ~s" arg-length args)
           )
         ]
@@ -210,96 +205,96 @@
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdr expects one argument: ~s in ~s" arg-length args)]
             [(not (pair? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cdr arguments ~% --- cdr expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cdr (1st args))]
+            [else (apply-k k (cdr (1st args)))]
           )
         ]
         [(car)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- car expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed car arguments ~% --- car expects a list argument: ~s in ~s" (1st args) args)]
-            [else (car (1st args))]
+            [else (apply-k k (car (1st args)))]
           )
         ]
         [(cadr)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cadr expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cadr arguments ~% --- cadr expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cadr (1st args))]
+            [else (apply-k k (cadr (1st args)))]
           )
         ]
         [(cddr)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cddr expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cddr arguments ~% --- cddr expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cddr (1st args))]
+            [else (apply-k k (cddr (1st args)))]
           )
         ]
         [(cdar)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdar expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cdar arguments ~% --- cdar expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cdar (1st args))]
+            [else (apply-k k (cdar (1st args)))]
           )
         ]
         [(caar)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- caar expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed caar arguments ~% --- caar expects a list argument: ~s in ~s" (1st args) args)]
-            [else (caar (1st args))]
+            [else (apply-k k (caar (1st args)))]
           )
         ]
         [(cdddr)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdddr expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cdddr arguments ~% --- cdddr expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cdddr (1st args))]
+            [else (apply-k k (cdddr (1st args)))]
           )
         ]
         [(caddr)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- caddr expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed caddr arguments ~% --- caddr expects a list argument: ~s in ~s" (1st args) args)]
-            [else (caddr (1st args))]
+            [else (apply-k k (caddr (1st args)))]
           )
         ]
         [(cdadr)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdadr expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cdadr arguments ~% --- cdadr expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cdadr (1st args))]
+            [else (apply-k k (cdadr (1st args)))]
           )
         ]
         [(cddar)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cddar expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cddar arguments ~% --- cddar expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cddar (1st args))]
+            [else (apply-k k (cddar (1st args)))]
           )
         ]
         [(cdaar)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cdaar expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cdaar arguments ~% --- cdaar expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cdaar (1st args))]
+            [else (apply-k k (cdaar (1st args)))]
           )
         ]
         [(cadar)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- cadar expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed cadar arguments ~% --- cadar expects a list argument: ~s in ~s" (1st args) args)]
-            [else (cadar (1st args))]
+            [else (apply-k k (cadar (1st args)))]
           )
         ]
         [(caaar)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments  ~% --- caaar expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed caaar arguments ~% --- caaar expects a list argument: ~s in ~s" (1st args) args)]
-            [else (caaar (1st args))]
+            [else (apply-k k (caaar (1st args)))]
           )
         ]
         [(null?)
           (if (equal? 1 arg-length)
-            (null? (1st args))
+            (apply-k k (null? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- null expects one argument: ~s in ~s" arg-length args)
           )
         ]
@@ -307,30 +302,30 @@
           (cond
             [(not (equal? 2 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- assq expects two arguments: ~s in ~s" arg-length args)]
             [(not (andmap pair? (2nd args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed assq arguments ~% --- assq expects its second argument to be a list of lists: ~s in ~s" (2nd args) args)]
-            [else (assq (1st args) (2nd args))]
+            [else (apply-k k (assq (1st args) (2nd args)))]
           )
         ]
         [(eq?)
           (if (equal? 2 arg-length)
-            (eq? (1st args) (2nd args))
+            (apply-k k (eq? (1st args) (2nd args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- eq? expects two arguments: ~s in ~s" arg-length args)
           )
         ]
         [(eqv?)
           (if (equal? 2 arg-length)
-            (eqv? (1st args) (2nd args))
+            (apply-k k (eqv? (1st args) (2nd args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- eqv? expects two arguments: ~s in ~s" arg-length args)
           )
         ]
         [(equal?)
           (if (equal? 2 arg-length)
-            (equal? (1st args) (2nd args))
+            (apply-k k (equal? (1st args) (2nd args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- equal? expects two arguments: ~s in ~s" arg-length args)
           )
         ]
         [(atom?)
           (if (equal? 1 arg-length)
-            (atom? (1st args))
+            (apply-k k (atom? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- atom? expects one argument: ~s in ~s" arg-length args)
           )
         ]
@@ -338,31 +333,31 @@
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- length expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed length argument ~% --- length expects a list: ~s in ~s" (1st args) args)]
-            [else (length (1st args))]
+            [else (apply-k k (length (1st args)))]
           )
         ]
         [(list->vector)
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- list->vector expects one argument: ~s in ~s" arg-length args)]
             [(not (list? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed list-vector argument ~% --- list->vector expects a list arguments: ~s in ~s" (1st args) args)]
-            [else (list->vector (1st args))]
+            [else (apply-k k (list->vector (1st args)))]
           )
         ]
         [(list?)
           (if (equal? 1 arg-length)
-            (list? (1st args))
+            (apply-k k (list? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- list? expects one argument: ~s in ~s" arg-length args)
           )
         ]
         [(pair?)
           (if (equal? 1 arg-length)
-            (pair? (1st args))
+            (apply-k k (pair? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- pair? expects one arguments: ~s in ~s" arg-length args)
           )
         ]
         [(procedure?)
           (if (equal? 1 arg-length)
-            (proc-val? (1st args))
+            (apply-k k (proc-val? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- procedure? expects one arguments: ~s in ~s" arg-length args)
           )
         ]
@@ -370,17 +365,18 @@
           (cond
             [(not (equal? 1 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- vector->list expects one argument: ~s in ~s" arg-length args)]
             [(not (vector? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed vector->list argument ~% --- vector->list expects a vector argument: ~s in ~s" (1st args) args)]
-            [else (vector->list (1st args))]
+            [else (apply-k k (vector->list (1st args)))]
           )
         ]
         [(vector)
-          (apply vector args)
+          (apply-k k (apply vector args))
         ]
         [(make-vector)
           (cond
             [(not (equal? 2 arg-length)) (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- make-vector expects two arguments (size and initial fill value): ~s in ~s" arg-length args)]
             [(not (fixnum? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed make-vector argument ~% --- make-vector expects the first argument to be a nonnegative fixnum: ~s in ~s" (1st args) args)]
             [(not (positive? (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed make-vector argument ~% --- make-vector expects the first argument to be a nonnegative fixnum: ~s in ~s" (1st args) args)]
+            [else (apply-k k (apply make-vector args))]
           )
         ]
         [(vector-ref)
@@ -390,24 +386,24 @@
             [(not (ormap (lambda (proc) (proc (2nd args))) (list fixnum? positive? zero?)))
                (errorf 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the second argument to be a nonnegative fixnum: ~s in ~s" (2nd args) args)]
             [(>= (2nd args) (vector-length (1st args))) (errorf 'apply-prim-proc "[ ERROR ]: Malformed vector-ref argument ~% --- vector-ref expects the second argument to be less than the length of the vector: ~s > ~s" (2nd args) (length (1st args)))]
-            [else (vector-ref (1st args) (2nd args))]
+            [else (apply-k k (vector-ref (1st args) (2nd args)))]
           )
         ]
         [(vector?)
           (if (equal? 1 arg-length)
-            (vector? (1st args))
+            (apply-k k (vector? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- vector? expects one argument: ~s in ~s" arg-length args)
           )
         ]
         [(number?)
           (if (equal? 1 arg-length)
-            (number? (1st args))
+            (apply-k k (number? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- number? expects one argument: ~s in ~s" arg-length args)
           )
         ]
         [(symbol?)
           (if (equal? 1 arg-length)
-            (symbol? (1st args))
+            (apply-k k (symbol? (1st args)))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of arguments ~% --- symbol? expects one argument: ~s in ~s" arg-length args)
           )
         ]
@@ -420,7 +416,7 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed set-car! argument ~% --- set-car! expects the first argument to be a pair: ~s in ~s" (1st args) args)
             ]
             [else
-              (apply set-car! args)
+              (apply-k k (apply set-car! args))
             ]
           )
         ]
@@ -433,7 +429,7 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed set-cdr! argument ~% --- set-cdr! expects the first argument to be a pair: ~s in ~s" (1st args) args)
             ]
             [else
-              (apply set-cdr! args)
+              (apply-k k (apply set-cdr! args))
             ]
           )
         ]
@@ -449,7 +445,7 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed vector-set! argument ~% --- vector-set! expects the second argument to be a nonnegative integer: ~s in ~s" (2nd args) args)
             ]
             [else
-              (apply vector-set! args)
+              (apply-k k (apply vector-set! args))
             ]
           )
         ]
@@ -462,7 +458,7 @@
               )
             ]
             [(equal? 1 arg-length)
-              (display (1st args))
+              (apply-k k (display (1st args)))
             ]
             [else
               (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of display arguments ~% --- number of arguments is incompatible with display: ~s in ~s" arg-length args)
@@ -471,12 +467,12 @@
         ]
         [(newline)
           (if (zero? arg-length)
-            (newline)
+            (apply-k k (newline))
             (errorf 'apply-prim-proc "[ ERROR ]: Incorrect number of newline arguments ~% --- newline expects zero arguments: ~s in ~s" arg-length args)
           )
         ]
-        [(=) (apply = args)]
-        [(list) (apply list args)]
+        [(=) (apply-k k (apply = args))]
+        [(list) (apply-k k (apply list args))]
         [(apply)
           (cond
             [(< arg-length 2)
@@ -489,7 +485,7 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed apply arguments ~% --- apply's last argument be a list: ~s in ~s" (car (last-pair args)) args)
             ]
             [else
-              (apply-proc (car args) (apply cons* (cdr args)) k)
+              (apply-k k (apply-proc (car args) (apply cons* (cdr args)) k))
             ]
           )
         ]
@@ -508,7 +504,7 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed member argument ~% --- member expects the second argument to be a list: ~s in ~s" (2nd args) args)
             ]
             [else
-              (apply member args)
+              (apply-k k (apply member args))
             ]
           )
         ]
@@ -529,10 +525,10 @@
                                     )])
             (cond
               [(null? args)
-                (append)
+                (apply-k k (append))
               ]
               [(append-check-cps args (lambda (x) x))
-                (apply append args)
+                (apply-k k (apply append args))
               ]
               [else
                 (errorf 'apply-prim-proc "[ ERROR ]: Malformed append statement ~% --- append takes the form (append lst ... any)")
@@ -552,7 +548,7 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed list-tail statement ~% --- list-tail second argument must be a nonnegative integer: ~s" (2nd args))
             ]
             [else
-              (apply list-tail args)
+              (apply-k k (apply list-tail args))
             ]
           )
         ]
@@ -599,8 +595,8 @@
       ]
       [closure (variables bodies env)
         (eval-bodies bodies
-          (extend-env (map dereference-parameter variables) (bind-args variables args '()) env)
-        )
+                     (extend-env (map dereference-parameter variables) (bind-args variables args '()) env)
+                     k)
       ]
 			; You will add other cases
       [else (errorf 'apply-proc "[ ERROR ]: Malformed proc-value ~% ---  unsuppported proc-value: ~s" proc-value)]

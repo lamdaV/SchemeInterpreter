@@ -239,7 +239,7 @@
   ]
 
   ; letrec
-  [for-each-k
+  [mutate-letrec-env-k
     (variables (list-of symbol?))
     (values (list-of expression?))
     (env environment?)

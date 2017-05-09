@@ -72,7 +72,7 @@
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
     (cases environment env
       [empty-env-record ()
-        (fail)
+        (apply-k fail (void))
       ]
       [extended-env-record (syms vals env)
 	      (let ((pos (list-find-position sym syms)))
@@ -82,7 +82,9 @@
           )
         )
       ]
-      (errorf 'apply-env "[ ERROR ]: undefined environment ~% --- the given environment is undefined: ~s" env)
+      [else
+        (errorf 'apply-env "[ ERROR ]: undefined environment ~% --- the given environment is undefined: ~s" env)
+      ]
     )
   )
 )
