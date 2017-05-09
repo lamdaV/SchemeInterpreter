@@ -485,7 +485,7 @@
               (errorf 'apply-prim-proc "[ ERROR ]: Malformed apply arguments ~% --- apply's last argument be a list: ~s in ~s" (car (last-pair args)) args)
             ]
             [else
-              (apply-k k (apply-proc (car args) (apply cons* (cdr args)) k))
+              (apply-proc (car args) (apply cons* (cdr args)) k)
             ]
           )
         ]
@@ -555,6 +555,9 @@
         [(call/cc)
           (apply-proc (car args) (list (continuation-proc k)) k)
         ]
+        [(exit-list)
+          args
+        ]
         [else
           (errorf 'apply-prim-proc "[ ERROR ]: Bad primitive procedure name ~% --- undefined primitive procedure: ~s" prim-proc)
         ]
@@ -601,8 +604,8 @@
                      (extend-env (map dereference-parameter variables) (bind-args variables args '()) env)
                      k)
       ]
-      [continuation-proc (k)
-        (apply-k k (car args))
+      [continuation-proc (c)
+        (apply-k c (car args))
       ]
 			; You will add other cases
       [else (errorf 'apply-proc "[ ERROR ]: Malformed proc-value ~% ---  unsuppported proc-value: ~s" proc-value)]
